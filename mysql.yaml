@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+data:
+  init-script.sql: |
+    CREATE DATABASE IF NOT EXISTS surveydb;
+    USE surveydb;
+---
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: surveyDB
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec: 
+      containers:
+        - image: docker.io/mysql
+          imagePullPolicy: Always  #Do not use remote mirror
+          name: mysql
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "admin"
+          volumeMounts:
+            - name: mysql-init-script
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+          - name: mysql-init-script
+            configMap:
+              name: mysql-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: survey.db
+spec:
+  ports:
+    - name: mysql-svc
+      port: 6449
+      targetPort: 3306
+  selector:
+    app: mysql
+  type: ClusterIP
