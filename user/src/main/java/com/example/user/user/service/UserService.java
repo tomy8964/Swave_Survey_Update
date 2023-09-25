@@ -9,7 +9,6 @@ import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.util.oAuth.JwtProperties;
 import com.example.user.util.oAuth.OauthToken;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +17,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserService {
-    private final OAuthService oAuthService;
+    private OAuthService oAuthService;
     private final UserRepository userRepository;
 
-    private static HttpHeaders getHttpHeaders(String jwtToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
-        return headers;
+    public UserService(OAuthService oAuthService, UserRepository userRepository) {
+        this.oAuthService = oAuthService;
+        this.userRepository = userRepository;
+    }
+
+    public void setoAuthService(OAuthService oAuthService) {
+        this.oAuthService = oAuthService;
     }
 
     public User getUserByJWT(HttpServletRequest request) { //(1)
@@ -40,12 +41,14 @@ public class UserService {
 
     public User getCurrentUser(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userCode");
+        userId = getUserByJWT(request).getId();
+        System.out.println("userId = " + userId);
         return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
     }
 
     public ResponseEntity<String> getLogin(String code, String provider) {
         OauthToken oauthToken = oAuthService.getAccessToken(code, provider);
-        Long saveUserId = oAuthService.SaveUser(oauthToken.getAccess_token(), provider);
+        Long saveUserId = oAuthService.saveUser(oauthToken.getAccess_token(), provider);
         String jwtToken = oAuthService.createJWTToken(saveUserId);
         HttpHeaders headers = getHttpHeaders(jwtToken);
 
@@ -66,5 +69,11 @@ public class UserService {
         user.setIsDeleted(true);
         userRepository.flush();
         return user.getId().toString();
+    }
+
+    private static HttpHeaders getHttpHeaders(String jwtToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+        return headers;
     }
 }

@@ -12,9 +12,16 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequestMapping("/api/user/external")
-@RequiredArgsConstructor
 public class UserExternalController {
-    private final UserService userService;
+    private UserService userService;
+
+    public UserExternalController(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/oauth/token")
     public ResponseEntity<String> getLogin(@RequestParam("code") String code, @RequestParam("provider") String provider) {
@@ -23,6 +30,7 @@ public class UserExternalController {
 
     @GetMapping("/me")
     public User getCurrentUser(HttpServletRequest request) {
+        log.info("request = ", request);
         return userService.getCurrentUser(request);
     }
 

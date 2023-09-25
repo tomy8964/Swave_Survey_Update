@@ -13,4 +13,15 @@ public class OauthToken {
     private String scope;
     private int refresh_token_expires_in;
 
+    public OauthToken() {
+    }
+
+    public OauthToken(String access_token, String token_type, String refresh_token, int expires_in, String scope, int refresh_token_expires_in) {
+        this.access_token = access_token;
+        this.token_type = token_type;
+        this.refresh_token = refresh_token;
+        this.expires_in = expires_in;
+        this.scope = scope;
+        this.refresh_token_expires_in = refresh_token_expires_in;
+    }
 }

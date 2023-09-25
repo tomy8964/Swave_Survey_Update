@@ -1,10 +1,6 @@
-buildscript {
-    ext {
-        queryDslVersion = "5.0.0"
-    }
-}
 
 plugins {
+    id 'jacoco'
     id 'java'
     id 'org.springframework.boot' version '3.0.5'
     id 'io.spring.dependency-management' version '1.1.0'
@@ -42,7 +38,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-tomcat'
     implementation 'org.springframework.boot:spring-boot-starter-web-services'
-    testImplementation project(path: ':')
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'com.h2database:h2'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -58,49 +53,72 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:'
 
-    // QueryDsl
-    implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
-    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
-    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
-    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-
     implementation 'com.mysql:mysql-connector-j'
-
-    // Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.redisson:redisson-spring-boot-starter:3.17.7'
 
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testImplementation project(path: ':')
 
     //monitoring
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 }
 
 tasks.named('test') {
     outputs.dir snippetsDir
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacoco.exec")
+    }
 }
 
-def querydslDir = "$buildDir/generated/querydsl"
+jacocoTestReport {
+    reports {
+        html.enabled true
+        xml.enabled false
+        csv.enabled true
 
-sourceSets {
-    main.java.srcDirs += [ querydslDir ]
+// 리포트의 저장 경로를 설정합니다.
+//        html.destination file("jacoco/jacocoHtml")
+//        xml.destination file("jacoco/jacoco.xml")
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "com/example/user/UserApplication*",
+                    "com/example/user/user/domain/QUser",
+                    "**/config/*"
+            ])
+        }))
+    }
+
+    finalizedBy 'jacocoTestCoverageVerification'
 }
 
-tasks.withType(JavaCompile) {
-    options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+jacocoTestCoverageVerification {
+
+    violationRules { // 커버리지의 범위와 퍼센테이지를 설정합니다.
+        rule {
+            element = 'CLASS'
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.10
+            }
+        }
+    }
 }
 
-clean {
-    // clean 실행 시 생성된 QClass 삭제
-    delete file(querydslDir)
+jacoco {
+    // JaCoCo 버전
+    toolVersion = '0.8.8'
+
+//  테스트결과 리포트를 저장할 경로 변경
+//  default는 "$/jacoco"
+//  reportsDir = file("$buildDir/customJacocoReportDir")
 }
-
-
-
-//tasks.named('asciidoctor') {
-//    inputs.dir snippetsDir
-//    dependsOn test
-//}

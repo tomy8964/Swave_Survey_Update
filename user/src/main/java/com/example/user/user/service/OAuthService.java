@@ -36,7 +36,7 @@ public class OAuthService {
 
     private final UserRepository userRepository;
     private final OuterRestApiUserService apiUserService;
-    private RestTemplate rt;
+    private RestTemplate rt = new RestTemplate();
 
     public OAuthService(UserRepository userRepository, OuterRestApiUserService apiUserService) {
         this.userRepository = userRepository;
@@ -60,7 +60,7 @@ public class OAuthService {
         return getOAuthToken(provider, tokenResponse);
     }
 
-    public Long SaveUser(String token, String provider) {
+    public Long saveUser(String token, String provider) {
         User user = null;
 
         HttpHeaders headers = new HttpHeaders();
@@ -150,7 +150,7 @@ public class OAuthService {
                 String[] pairs = Objects.requireNonNull(responseBody).split("&");
                 Arrays.stream(pairs).map(pair -> pair.split("=", 2)).forEach(tokens -> {
                     String key = tokens[0];
-                    String value = tokens.length == 2 ? tokens[1] : "";
+                    String value = tokens[1];
                     map.put(key, value);
                 });
                 // Map 객체를 JSON 형태로 변환
@@ -186,13 +186,12 @@ public class OAuthService {
                 clientSecret = "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";
                 redirectUri = "http://172.16.210.80:80/oauth/callback/google";
             }
-            case "git" -> {
+            default -> {
                 grantType = "authorization_code";
                 clientId = "Iv1.986aaa4d78140fb7";
                 clientSecret = "0c8e730012e8ca8e41a3922358572457f5cc57e4";
                 redirectUri = "http://172.16.210.80:80/oauth/callback/git";
             }
-            default -> throw new IllegalArgumentException("Invalid Provider: " + provider);
         }
 
         HttpHeaders headers = new HttpHeaders();
@@ -210,10 +209,9 @@ public class OAuthService {
     //provider에 따라 URL 제공 구분
     private String getProviderTokenUrl(String provider) {
         return switch (provider) {
-            case "kakao" -> "https://kauth.kakao.com/oauth/token";
+            default -> "https://kauth.kakao.com/oauth/token";
             case "google" -> "https://oauth2.googleapis.com/token";
             case "git" -> "https://github.com/login/oauth/access_token";
-            default -> throw new IllegalArgumentException("Invalid Provider: " + provider);
         };
     }
 
@@ -278,18 +276,25 @@ public class OAuthService {
                 gitProfileRequest,
                 String.class
         );
+
         String name;
         String picture;
+
         try {
             JSONParser parser = new JSONParser();
             String userInfo = gitProfileResponse.getBody();
+            System.out.println("userInfo.getClass() = " + userInfo.getClass());
+            System.out.println("userInfo = " + userInfo);
             JSONObject jsonObject = (JSONObject) parser.parse(userInfo);
+            System.out.println("jsonObject = " + jsonObject);
             name = (String) jsonObject.get("login");
             picture = (String) jsonObject.get("avatar_url");
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
 
+        System.out.println("picture = " + picture);
+        System.out.println("name = " + name);
 
         //Git은 email 정보를 다시 한번 받아와야 함
         ResponseEntity<String> gitEmailResponse = rt.exchange(

@@ -18,9 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 public class UserRepositoryTest {
 
-    @PersistenceContext
-    EntityManager em;
-
     @Autowired
     UserRepository userRepository;
 

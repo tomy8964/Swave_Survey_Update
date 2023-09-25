@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">user</a> &gt; <a href="index.source.html" class="el_package">com.example.user.util.oAuth</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.example.user.util.oAuth;
+
+import com.example.user.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.CorsFilter;
+
+@Configuration
+@EnableWebSecurity
+<span class="fc" id="L21">@RequiredArgsConstructor</span>
+@ConditionalOnDefaultWebSecurity
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+public class SecurityConfig {
+
+    public static final String FRONT_URL = &quot;http://localhost:3000&quot;;
+    private final UserRepository userRepository;
+    private final CorsFilter corsFilter;
+
+    // @Bean -&gt; �빐�떦 硫붿냼�뱶�쓽 由ы꽩�릺�뒗 �삤釉뚯젥�듃瑜� IoC濡� �벑濡앺빐以�
+    @Bean
+    public BCryptPasswordEncoder encodePwd() {
+<span class="fc" id="L33">        return new BCryptPasswordEncoder();</span>
+    }
+
+    @Bean
+    @Order(SecurityProperties.BASIC_AUTH_ORDER)
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+<span class="fc" id="L40">        http.csrf().disable()</span>
+<span class="fc" id="L41">                .sessionManagement()  // session �쓣 �궗�슜�븯吏� �븡�쓬</span>
+<span class="fc" id="L42">                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)</span>
+<span class="fc" id="L43">                .and()</span>
+<span class="fc" id="L44">                .httpBasic().disable()</span>
+<span class="fc" id="L45">                .formLogin().disable()</span>
+<span class="fc" id="L46">                .addFilter(corsFilter); // @CrossOrigin(�씤利쓃), �떆�걧由ы떚 �븘�꽣�뿉 �벑濡� �씤利�(O)</span>
+
+<span class="fc" id="L48">        http.headers().frameOptions().sameOrigin();</span>
+
+<span class="fc" id="L50">        http.authorizeRequests()</span>
+<span class="fc" id="L51">                .requestMatchers(FRONT_URL + &quot;/main/**&quot;)</span>
+<span class="fc" id="L52">                .authenticated()</span>
+<span class="fc" id="L53">                .anyRequest().permitAll()</span>
+<span class="fc" id="L54">                .and()</span>
+<span class="fc" id="L55">                .exceptionHandling()</span>
+<span class="fc" id="L56">                .authenticationEntryPoint(new CustomAuthenticationEntryPoint());</span>
+
+
+<span class="fc" id="L59">        http.addFilterBefore(new JwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);</span>
+<span class="fc" id="L60">        return http.build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

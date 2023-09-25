@@ -23,10 +23,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    // 인증에서 제외할 url
-    private static final String Exclude_url = "/api/*";
-    private static final List<String> EXCLUDE_URL =
-            List.of("/api/user/external/oauth/token", "");
+    private static final List<String> EXCLUDE_URL = List.of(
+            "/api/user/external/oauth/token"
+    );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -38,15 +37,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         } else if (request.getHeader("Authorization") == null) {
-            log.info("error");
+            log.info("Authorization이 없습니다.");
             request.setAttribute(JwtProperties.HEADER_STRING, "Authorization이 없습니다.");
-            System.out.println("Authorization");
             throw new ServletException();
-        }
-        // header 가 정상적인 형식인지 확인
-        if (jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
+        } else if (!jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)) {
             filterChain.doFilter(request, response);
-            return;
+            log.info("Invalid JWT Token");
+            throw new ServletException();
         }
 
         // jwt 토큰을 검증해서 정상적인 사용자인지 확인
@@ -54,21 +51,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         Long userCode;
 
-        if (pathMatchesExcludePattern(request.getRequestURI())) {
-            // Skip JWT authentication for excluded URLs
-            filterChain.doFilter(request, response);
-            return;
-        } else {
-            try {
-                userCode = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("id").asLong();
-                System.out.println(userCode);
-            } catch (TokenExpiredException e) {
-                request.setAttribute(JwtProperties.HEADER_STRING, "토큰이 만료되었습니다.");
-                throw new ServletException(e);
-            } catch (JWTVerificationException e) {
-                request.setAttribute(JwtProperties.HEADER_STRING, "유효하지 않은 토큰입니다.");
-                throw new ServletException(e);
-            }
+        try {
+            userCode = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("id").asLong();
+            System.out.println(userCode);
+        } catch (TokenExpiredException e) {
+            request.setAttribute(JwtProperties.HEADER_STRING, "토큰이 만료되었습니다.");
+            throw new ServletException(e);
+        } catch (JWTVerificationException e) {
+            request.setAttribute(JwtProperties.HEADER_STRING, "유효하지 않은 토큰입니다.");
+            throw new ServletException(e);
         }
 
         request.setAttribute("userCode", userCode);
@@ -76,16 +67,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Filter에서 제외할 URL 설정
-    @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
-        return EXCLUDE_URL.stream().anyMatch(exclude -> exclude.equalsIgnoreCase(request.getServletPath()));
-    }
-
     private boolean pathMatchesExcludePattern(String requestURI) {
         AntPathMatcher pathMatcher = new AntPathMatcher();
-        String[] excludeUrls = Exclude_url.split(",");
-        for (String excludeUrl : excludeUrls) {
+        for (String excludeUrl : EXCLUDE_URL) {
             if (pathMatcher.match(excludeUrl, requestURI)) {
                 return true;
             }

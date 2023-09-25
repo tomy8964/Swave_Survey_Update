@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">user</a> &gt; <a href="index.source.html" class="el_package">com.example.user.user.domain</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.example.user.user.domain;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+
+import java.sql.Timestamp;
+
+@Entity
+@Getter
+@Where(clause = &quot;is_deleted = false&quot;)
+@SQLDelete(sql = &quot;UPDATE user SET is_deleted = true where user_id = ?&quot;)
+<span class="fc" id="L20">@NoArgsConstructor(access = AccessLevel.PROTECTED)</span>
+@Table(name = &quot;user_master&quot;)
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;user_Id&quot;)
+<span class="fc" id="L27">    private Long id;</span>
+
+<span class="fc" id="L29">    private String profileImgUrl;</span>
+<span class="fc" id="L30">    private String nickname;</span>
+<span class="fc" id="L31">    private String email;</span>
+<span class="fc" id="L32">    private String provider;</span>
+<span class="fc" id="L33">    private UserRole userRole;</span>
+<span class="fc" id="L34">    private String description;</span>
+
+<span class="fc" id="L36">    @JsonProperty(&quot;deleted&quot;)</span>
+<span class="fc" id="L37">    private boolean isDeleted = false;</span>
+
+    @CreationTimestamp
+<span class="fc" id="L40">    private Timestamp createTime;</span>
+
+
+<span class="pc" id="L43">    @Builder</span>
+    public User(String profileImgUrl, String nickname,
+<span class="fc" id="L45">                String email, String provider, UserRole userRole, String description) {</span>
+<span class="fc" id="L46">        this.profileImgUrl = profileImgUrl;</span>
+<span class="fc" id="L47">        this.nickname = nickname;</span>
+<span class="fc" id="L48">        this.email = email;</span>
+<span class="fc" id="L49">        this.provider = provider;</span>
+<span class="fc" id="L50">        this.userRole = userRole;</span>
+<span class="fc" id="L51">        this.description = description;</span>
+<span class="fc" id="L52">    }</span>
+
+    public void updateUser(String nickname, String description) {
+<span class="fc" id="L55">        this.nickname = nickname;</span>
+<span class="fc" id="L56">        this.description = description;</span>
+<span class="fc" id="L57">    }</span>
+
+    public void setIsDeleted(boolean isDeleted) {
+<span class="fc" id="L60">        this.isDeleted = isDeleted;</span>
+<span class="fc" id="L61">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
