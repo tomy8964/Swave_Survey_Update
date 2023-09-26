@@ -15,7 +15,7 @@ public class QuestionResponseDto {
     private Long answerId;
 
 
-    // 주관식, 찬부식 + 객관식 -> 나중에 서비스에서 구분필요
+    // 주관식, 찬부식 + 객관식 -> type으로 구분
     @Builder
     public QuestionResponseDto(String title, int type, String answer, Long answerId) {
         this.type = type;

@@ -40,8 +40,7 @@ public class UserService {
     }
 
     public User getCurrentUser(HttpServletRequest request) {
-        Long userId = (Long) request.getAttribute("userCode");
-        userId = getUserByJWT(request).getId();
+        Long userId = getUserByJWT(request).getId();
         System.out.println("userId = " + userId);
         return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
     }

@@ -9,12 +9,15 @@ import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class ChoiceDetailDto implements Serializable {
     private Long id;
     private String title;
     private int count;
 
-    // getter, setter 생략
+    @Builder
+    public ChoiceDetailDto(Long id, String title, int count) {
+        this.id = id;
+        this.title = title;
+        this.count = count;
+    }
 }

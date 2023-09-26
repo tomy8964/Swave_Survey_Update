@@ -54,3 +54,7 @@ npm-debug.log*
 
 ### yml ###
 *.yml
+
+/generated
+
+*.html

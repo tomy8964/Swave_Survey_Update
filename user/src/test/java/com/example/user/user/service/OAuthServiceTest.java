@@ -3,7 +3,6 @@ package com.example.user.user.service;
 import com.example.user.restAPI.service.OuterRestApiUserService;
 import com.example.user.user.domain.User;
 import com.example.user.user.domain.UserRole;
-import com.example.user.user.exception.UserNotFoundException;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.util.oAuth.OauthToken;
 import jakarta.persistence.EntityManager;
@@ -34,8 +33,6 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 public class OAuthServiceTest {
 
-    @PersistenceContext
-    EntityManager em;
     @InjectMocks
     private OAuthService oAuthService;
     @Autowired
@@ -91,25 +88,25 @@ public class OAuthServiceTest {
                 + "}";
     }
 
-    private static String getMockGitProfile1() {
-        return "{\"login\": \"sampleName\", \"avatar_url\": \"samplePicture\"}";
-    }
+    private static final String getMockGitProfile1 = "{\"login\": \"sampleName\", \"avatar_url\": \"samplePicture\"}";
+
 
     private static String getMockGitProfile2() {
-        return "[\n" +
-                "  {\n" +
-                "    \"email\": \"sample@example.com\",\n" +
-                "    \"verified\": true,\n" +
-                "    \"primary\": true,\n" +
-                "    \"visibility\": \"public\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"email\": \"another@example.com\",\n" +
-                "    \"verified\": true,\n" +
-                "    \"primary\": false,\n" +
-                "    \"visibility\": \"private\"\n" +
-                "  }\n" +
-                "]";
+        return """
+                [
+                  {
+                    "email": "sample@example.com",
+                    "verified": true,
+                    "primary": true,
+                    "visibility": "public"
+                  },
+                  {
+                    "email": "another@example.com",
+                    "verified": true,
+                    "primary": false,
+                    "visibility": "private"
+                  }
+                ]""";
     }
     
     @Test
@@ -298,7 +295,7 @@ public class OAuthServiceTest {
         System.out.println("oauthToken.getAccess_token() = " + oauthToken.getAccess_token());
 
         // Create a sample JSON response for the Kakao profile
-        String sampleGitProfile1 = getMockGitProfile1();
+        String sampleGitProfile1 = getMockGitProfile1;
         String sampleGitProfile2 = getMockGitProfile2();
         // Create a mock response entity for the Kakao profile
         ResponseEntity<String> mockGitProfileResponse1 = ResponseEntity.ok(sampleGitProfile1);

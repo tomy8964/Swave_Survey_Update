@@ -1,6 +1,6 @@
 package com.example.surveyanswer.survey.restAPI.service;
 
-import com.example.surveyanswer.survey.domain.SurveyDocument;
+import com.example.surveyanswer.survey.response.SurveyDetailDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +23,7 @@ public class RestAPIService {
     }
 
 
-    public void restAPItoAnalyzeController(Long surveyDocumentId) {
+    public void startAnalyze(Long surveyDocumentId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("응답 저장 후 -> 분석 시작 REST API 전달");
@@ -72,7 +72,7 @@ public class RestAPIService {
         log.info("test choice count REST API 전달");
     }
 
-    public void giveDocumentIdtoCountAnswer(Long surveyDocumentId) {
+    public void giveDocumentIdtoCountResponse(Long surveyDocumentId) {
         if (surveyDocumentId != null) {
             //REST API로 분석 시작 컨트롤러로 전달
             // Create a WebClient instance
@@ -99,26 +99,23 @@ public class RestAPIService {
         log.info("test 분석 시작 REST API 전달");
     }
 
-    public SurveyDocument getSurveyDocument(Long surveyDocumentId) {
+    public SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
-        log.info("GET SurveyDocument");
+        log.info("GET SurveyDetailDto");
 
         // Define the API URL
         String apiUrl = "http://" + gateway + "/api/document/internal/getSurveyDocument/" + surveyDocumentId;
         log.info(apiUrl);
 
         // Make a GET request to the API and retrieve the response
-        SurveyDocument get = webClient.get()
+        SurveyDetailDto response = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization","NotNull")
                 .retrieve()
-                .bodyToMono(SurveyDocument.class)
+                .bodyToMono(SurveyDetailDto.class)
                 .block();
 
-        // Process the response as needed
-        System.out.println("Request: " + get.getDesign());
-
-        return get;
+        return response;
     }
 }

@@ -42,4 +42,6 @@ out/
 ### properties ###
 *.properties
 
-generated
+/generated
+
+*.html

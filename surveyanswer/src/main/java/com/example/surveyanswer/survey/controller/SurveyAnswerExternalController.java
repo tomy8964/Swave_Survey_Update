@@ -22,12 +22,6 @@ public class SurveyAnswerExternalController {
     private final SurveyAnswerService surveyService;
     private final RedissonClient redissonClient;
 
-    @GetMapping(value = "/test")
-    public String test() {
-
-        return"test";
-    }
-
     // 설문 참여
 //    @Cacheable(value = "load-survey", key = "#id")
     @GetMapping(value = "/load/{id}")

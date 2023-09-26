@@ -35,11 +35,11 @@ public class UserExternalControllerTest {
     EntityManager em;
 
     @Autowired
-    /**
-     * 웹 API 테스트할 때 사용
-     * 스프링 MVC 테스트의 시작점
-     * HTTP GET,POST 등에 대해 API 테스트 가능
-     * */
+    /*
+      웹 API 테스트할 때 사용
+      스프링 MVC 테스트의 시작점
+      HTTP GET,POST 등에 대해 API 테스트 가능
+      */
             MockMvc mockMvc;
     @Autowired
     UserRepository userRepository;

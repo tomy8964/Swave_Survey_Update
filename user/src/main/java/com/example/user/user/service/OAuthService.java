@@ -283,18 +283,12 @@ public class OAuthService {
         try {
             JSONParser parser = new JSONParser();
             String userInfo = gitProfileResponse.getBody();
-            System.out.println("userInfo.getClass() = " + userInfo.getClass());
-            System.out.println("userInfo = " + userInfo);
             JSONObject jsonObject = (JSONObject) parser.parse(userInfo);
-            System.out.println("jsonObject = " + jsonObject);
             name = (String) jsonObject.get("login");
             picture = (String) jsonObject.get("avatar_url");
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
-
-        System.out.println("picture = " + picture);
-        System.out.println("name = " + name);
 
         //Git은 email 정보를 다시 한번 받아와야 함
         ResponseEntity<String> gitEmailResponse = rt.exchange(

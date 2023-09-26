@@ -1,17 +1,20 @@
 package com.example.surveyanswer.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SurveyAnswer {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "survey_answer_id")
     private Long id;
     @Column(name = "survey_type")
@@ -21,26 +24,18 @@ public class SurveyAnswer {
     @Column(name = "survey_description")
     private String description;
 
-    @OneToMany(mappedBy = "surveyAnswerId", fetch = FetchType.LAZY)
-//    @JsonIgnore //순환참조 방지
     @Column(name = "content")
-    private List<QuestionAnswer> questionanswersList;
+    @OneToMany(mappedBy = "surveyAnswer", fetch = FetchType.LAZY)
+    private List<QuestionAnswer> questionAnswersList = new ArrayList<>();
 
     @Column(name = "survey_document_Id")
     private Long surveyDocumentId;
 
     @Builder
-    public SurveyAnswer(Long surveyDocumentId, String title, int type, String description, List<QuestionAnswer> questionAnswerList) {
+    public SurveyAnswer(Long surveyDocumentId, String title, int type, String description) {
         this.surveyDocumentId = surveyDocumentId;
         this.title = title;
         this.type = type;
         this.description = description;
-        this.questionanswersList = questionAnswerList;
     }
-
-    // 문항 List 넣어주기
-    public void setQuestion(QuestionAnswer questionanswer) {
-        this.questionanswersList.add(questionanswer);
-    }
-
 }

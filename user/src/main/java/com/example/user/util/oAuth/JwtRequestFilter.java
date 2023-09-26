@@ -24,13 +24,19 @@ import java.util.List;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private static final List<String> EXCLUDE_URL = List.of(
-            "/api/user/external/oauth/token"
+            "/api/user/external/oauth/token",
+            "/favicon.ico",
+            "/swagger/**",
+            "/swagger-resources/**",
+            "/swagger-ui/**", "/webjars/**","/swagger-ui.html",
+            "/v3/api-docs/**"
     );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
         System.out.println("JwtRequestFilter 진입");
+        log.info(request.getRequestURI());
 
         if (pathMatchesExcludePattern(request.getRequestURI())) {
             // Skip JWT authentication for excluded URLs
