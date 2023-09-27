@@ -3,7 +3,6 @@ package com.example.surveyanalyze.survey.service;
 import com.example.surveyanalyze.ResourceLocator;
 import com.example.surveyanalyze.survey.domain.*;
 import com.example.surveyanalyze.survey.exception.InvalidPythonException;
-import com.example.surveyanalyze.survey.exception.InvalidTokenException;
 import com.example.surveyanalyze.survey.repository.aprioriAnlayze.AprioriAnalyzeRepository;
 import com.example.surveyanalyze.survey.repository.chiAnlayze.ChiAnalyzeRepository;
 import com.example.surveyanalyze.survey.repository.choiceAnalyze.ChoiceAnalyzeRepository;
@@ -14,7 +13,6 @@ import com.example.surveyanalyze.survey.response.*;
 import com.example.surveyanalyze.survey.restAPI.service.RestAPIService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -32,8 +30,6 @@ import java.util.*;
 
 import static org.thymeleaf.util.ArrayUtils.contains;
 
-//import static com.example.surveyAnalyze.util.SurveyTypeCheck.typeCheck;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -47,6 +43,18 @@ public class SurveyAnalyzeService {
     private final RestAPIService restAPIService;
     private final ResourceLocator resourceLocator;
 
+    public static Map<String, Integer> countWords(String text) {
+        String[] words = text.split("\\s+");
+        Map<String, Integer> wordCount = new HashMap<>();
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
+            }
+        }
+        return wordCount;
+    }
+
     private static List<Object> getListResult(String line) throws JsonProcessingException {
         String inputString = line.replaceAll("'", "");
 //            String inputString = testString.replaceAll("'", "");
@@ -58,15 +66,6 @@ public class SurveyAnalyzeService {
         List<Object> testList = objectMapper.readValue(inputString, List.class);
         log.info(String.valueOf(testList));
         return testList;
-    }
-
-    // 회원 유효성 검사, token 존재하지 않으면 예외처리
-    private static void checkInvalidToken(HttpServletRequest request) throws InvalidTokenException {
-        if (request.getHeader("Authorization") == null) {
-            log.info("error");
-            throw new InvalidTokenException();
-        }
-        log.info("토큰 체크 완료");
     }
 
     private static String removeStopwords(List<String> inputList, List<String> stopwords) {
@@ -94,18 +93,6 @@ public class SurveyAnalyzeService {
         }
 
         return filteredList.toString().trim();
-    }
-
-    public static Map<String, Integer> countWords(String text) {
-        String[] words = text.split("\\s+");
-        Map<String, Integer> wordCount = new HashMap<>();
-
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
-            }
-        }
-        return wordCount;
     }
 
     // 파이썬에 DocumentId 보내주고 분석결과 Entity에 매핑해서 저장
@@ -157,31 +144,32 @@ public class SurveyAnalyzeService {
     private void saveSurveyAnalyze(long surveyDocumentId, ArrayList<Object> apriori, ArrayList<Object> compare, ArrayList<Object> chi) {
         SurveyAnalyze surveyAnalyze = getSurveyAnalyze(surveyDocumentId);
 
-        //get surveyDocument
-        SurveyDocument surveyDocument = restAPIService.getSurveyDocument(surveyDocumentId);
+        //get surveyDetailDto
+        SurveyDetailDto surveyDetailDto = restAPIService.getSurveyDetailDto(surveyDocumentId);
 
-        saveQuestionAnalyze(apriori, compare, chi, surveyAnalyze, surveyDocument);
+        saveQuestionAnalyze(apriori, compare, chi, surveyAnalyze, surveyDetailDto);
         surveyAnalyzeRepository.flush();
     }
 
-    private void saveQuestionAnalyze(ArrayList<Object> apriori, ArrayList<Object> compare, ArrayList<Object> chi, SurveyAnalyze surveyAnalyze, SurveyDocument surveyDocument) {
+    private void saveQuestionAnalyze(ArrayList<Object> apriori, ArrayList<Object> compare, ArrayList<Object> chi, SurveyAnalyze surveyAnalyze, SurveyDetailDto surveyDetailDto) {
         int p = 0;
         List<QuestionAnalyze> questionAnalyzeList = new ArrayList<>();
-        for (QuestionDocument questionDocument : surveyDocument.getQuestionDocumentList()) {
-            if (questionDocument.getQuestionType() == 0) {
+        for (QuestionDetailDto questionDetailDto : surveyDetailDto.getQuestionList()) {
+            if (questionDetailDto.getQuestionType() == 0) {
                 continue;
             }
             QuestionAnalyze questionAnalyze;
             questionAnalyze = QuestionAnalyze.builder()
-                    .questionTitle(questionDocument.getTitle())
-                    .surveyAnalyzeId(surveyAnalyze)
+                    .questionTitle(questionDetailDto.getTitle())
+                    .surveyAnalyze(surveyAnalyze)
                     .build();
 
+            // 위치 변경 요망
             questionAnalyzeRepository.save(questionAnalyze);
 
             // compare
             List<Object> compareList = (List<Object>) compare.get(p);
-            List<QuestionDocument> questionDocumentList = surveyDocument.getQuestionDocumentList();
+            List<QuestionDetailDto> questionDocumentList = surveyDetailDto.getQuestionList();
             saveCompare(questionAnalyze, compareList, questionDocumentList, questionDocumentList.size());
 
             // chi
@@ -197,116 +185,7 @@ public class SurveyAnalyzeService {
         // Define a custom Comparator
         log.info(String.valueOf(apriori));
         saveApriori(apriori, surveyAnalyze);
-        surveyAnalyze.setQuestionAnalyzeList(questionAnalyzeList);
         surveyAnalyzeRepository.flush();
-    }
-
-    private void saveApriori(ArrayList<Object> apriori, SurveyAnalyze surveyAnalyze) {
-        //apriori
-        List<AprioriAnalyze> aprioriAnalyzeList = new ArrayList<>();
-        for (int j = 0; j < apriori.size(); j++) {
-            // [['1', [0.66, '3'], [0.33, '4']]
-            List<Object> dataList = (List<Object>) apriori.get(j);
-            Long choiceId = Long.valueOf((Integer) dataList.get(0));
-            AprioriAnalyze aprioriAnalyze;
-            //get Choice
-            Choice choice = restAPIService.getChoice(choiceId);
-            QuestionDocument questionDocument1 = restAPIService.getQuestionByChoiceId(choiceId);
-//                    QuestionDocument questionDocument1 = getQuestionDocument(choice.getQuestion_id().getId());
-            aprioriAnalyze = AprioriAnalyze.builder()
-                    .choiceId(choiceId)
-                    .choiceTitle(choice.getTitle())
-                    .questionTitle(questionDocument1.getTitle())
-                    .choiceAnalyzeList(new ArrayList<>())
-                    .surveyAnalyzeId(surveyAnalyze)
-                    .build();
-
-            aprioriAnalyzeRepository.save(aprioriAnalyze);
-            // for문 [0.88,2] 같은 배열의 갯수 만큼
-            // [[0.88,3],[0.8,5]]
-            saveAprioriSecond(dataList, aprioriAnalyze, questionDocument1);
-            aprioriAnalyzeList.add(aprioriAnalyze);
-            aprioriAnalyzeRepository.flush();
-        }
-        // Define a custom Comparator
-        Comparator<AprioriAnalyze> choiceIdComparator = Comparator.comparing(AprioriAnalyze::getChoiceId);
-
-        // Sort the list using the custom Comparator
-        Collections.sort(aprioriAnalyzeList, choiceIdComparator);
-        surveyAnalyze.setAprioriAnalyzeList(aprioriAnalyzeList);
-        surveyAnalyzeRepository.flush();
-    }
-
-    private void saveAprioriSecond(List<Object> dataList, AprioriAnalyze aprioriAnalyze, QuestionDocument questionDocument1) {
-        List<ChoiceAnalyze> choiceAnalyzeList = new ArrayList<>();
-        for (int i = 0; i < dataList.size() - 1; i++) {
-            List<Object> subList = (List<Object>) dataList.get(i + 1);
-            ChoiceAnalyze choiceAnalyze = new ChoiceAnalyze();
-            double support = Math.round((double) subList.get(0) * 1000) / 1000.0;
-            Long choiceId2 = Long.valueOf((Integer) subList.get(1));
-            Choice choice1 = restAPIService.getChoice(choiceId2);
-            choiceAnalyze = choiceAnalyze.builder()
-                    .choiceTitle(choice1.getTitle())
-                    .support(support)
-                    .aprioriAnalyzeId(aprioriAnalyze)
-                    .choiceId(choiceId2)
-                    .questionTitle(questionDocument1.getTitle())
-                    .build();
-            choiceAnalyzeRepository.save(choiceAnalyze);
-            choiceAnalyzeList.add(choiceAnalyze);
-        }
-        aprioriAnalyze.setChoiceAnalyzeList(choiceAnalyzeList);
-        aprioriAnalyzeRepository.flush();
-    }
-
-    private void saveChi(QuestionAnalyze questionAnalyze, List<QuestionDocument> questionDocumentList, int size, int o, List<Object> chiList) {
-        List<ChiAnalyze> chiAnalyzeList = new ArrayList<>();
-        for (int k = 0; k < size; k++) {
-            if (questionDocumentList.get(k).getQuestionType() == 0) {
-                continue;
-            }
-            if (questionDocumentList.get(k).getTitle() == questionAnalyze.getQuestionTitle()) {
-                continue;
-            }
-            Double pValue = (Double) chiList.get(o);
-            ChiAnalyze chiAnalyze = new ChiAnalyze();
-            chiAnalyze = ChiAnalyze.builder()
-                    .questionAnalyzeId(questionAnalyze)
-                    .pValue(pValue)
-                    .questionTitle(questionDocumentList.get(k).getTitle())
-                    .build();
-            o++;
-            chiAnalyzeRepository.save(chiAnalyze);
-            chiAnalyzeList.add(chiAnalyze);
-        }
-        questionAnalyze.setChiAnalyzeList(chiAnalyzeList);
-        questionAnalyzeRepository.flush();
-    }
-
-    private void saveCompare(QuestionAnalyze questionAnalyze, List<Object> compareList, List<QuestionDocument> questionDocumentList, int size) {
-        int o = 0;
-        List<CompareAnalyze> compareAnalyzeList = new ArrayList<>();
-        for (int k = 0; k < size; k++) {
-            if (questionDocumentList.get(k).getQuestionType() == 0) {
-                continue;
-            }
-            if (questionDocumentList.get(k).getTitle() == questionAnalyze.getQuestionTitle()) {
-                continue;
-            }
-            ArrayList<Double> temp = (ArrayList<Double>) compareList.get(o);
-            Double pValue = temp.get(0); // Assuming you want to retrieve the first Double value from the ArrayList
-
-            CompareAnalyze compareAnalyze = CompareAnalyze.builder()
-                    .questionAnalyzeId(questionAnalyze)
-                    .pValue(pValue)
-                    .questionTitle(questionDocumentList.get(k).getTitle())
-                    .build();
-            o++;
-            compareAnalyzeRepository.save(compareAnalyze);
-            compareAnalyzeList.add(compareAnalyze);
-        }
-        questionAnalyze.setCompareAnalyzeList(compareAnalyzeList);
-        questionAnalyzeRepository.flush();
     }
 
     // 분석 응답 (문항 별 응답 수 불러오기) (Count)
@@ -320,7 +199,7 @@ public class SurveyAnalyzeService {
 ////        checkInvalidToken(request);
 //
 //        //Survey_Id를 가져와서 그 Survey 의 Document 를 가져옴
-//        Optional<SurveyDocument> findSurvey = surveyDocumentRepository.findById(surveyId);
+//        Optional<SurveyDetailDto> findSurvey = surveyDocumentRepository.findById(surveyId);
 //
 //        if (findSurvey.isPresent()) {
 //            //manage 부분만 추출
@@ -341,22 +220,124 @@ public class SurveyAnalyzeService {
     // 분석 관리 Post
 //    public void setSurveyMange(HttpServletRequest request, Long surveyId, SurveyManageDto manage) throws InvalidTokenException {
 ////        checkInvalidToken(request);
-//        Optional<SurveyDocument> optionalSurvey = surveyDocumentRepository.findById(surveyId);
+//        Optional<SurveyDetailDto> optionalSurvey = surveyDocumentRepository.findById(surveyId);
 //
 //        if (optionalSurvey.isPresent()) {
-//            SurveyDocument surveyDocument = optionalSurvey.get();
+//            SurveyDetailDto surveyDetailDto = optionalSurvey.get();
 //            // update survey properties using the manage DTO
-//            surveyDocument.setDeadline(manage.getDeadline());
-//            surveyDocument.setUrl(manage.getUrl());
-//            surveyDocument.setStartDate(manage.getStartDate());
-//            surveyDocument.setAcceptResponse(manage.isAcceptResponse());
+//            surveyDetailDto.setDeadline(manage.getDeadline());
+//            surveyDetailDto.setUrl(manage.getUrl());
+//            surveyDetailDto.setStartDate(manage.getStartDate());
+//            surveyDetailDto.setAcceptResponse(manage.isAcceptResponse());
 //
-//            surveyDocumentRepository.save(surveyDocument);
+//            surveyDocumentRepository.save(surveyDetailDto);
 //        } else {
 //            throw new InvalidSurveyException();
 //        }
 ////        checkInvalidToken(request);
 //    }
+
+    private void saveApriori(ArrayList<Object> apriori, SurveyAnalyze surveyAnalyze) {
+        //apriori
+        List<AprioriAnalyze> aprioriAnalyzeList = new ArrayList<>();
+        for (int j = 0; j < apriori.size(); j++) {
+            // [['1', [0.66, '3'], [0.33, '4']]
+            List<Object> dataList = (List<Object>) apriori.get(j);
+            Long choiceId = Long.valueOf((Integer) dataList.get(0));
+            AprioriAnalyze aprioriAnalyze;
+            //get ChoiceDetailDto
+            ChoiceDetailDto choiceDto = restAPIService.getChoiceDto(choiceId);
+            QuestionDetailDto questionDocument1 = restAPIService.getQuestionByChoiceId(choiceId);
+//                    QuestionDetailDto questionDocument1 = getQuestionDocument(choiceDto.getQuestion_id().getId());
+            aprioriAnalyze = AprioriAnalyze.builder()
+                    .choiceId(choiceId)
+                    .choiceTitle(choiceDto.getTitle())
+                    .questionTitle(questionDocument1.getTitle())
+                    .choiceAnalyzeList(new ArrayList<>())
+                    .surveyAnalyze(surveyAnalyze)
+                    .build();
+
+            aprioriAnalyzeRepository.save(aprioriAnalyze);
+            // for문 [0.88,2] 같은 배열의 갯수 만큼
+            // [[0.88,3],[0.8,5]]
+            saveAprioriSecond(dataList, aprioriAnalyze, questionDocument1);
+            aprioriAnalyzeList.add(aprioriAnalyze);
+            aprioriAnalyzeRepository.flush();
+        }
+        // Define a custom Comparator
+        Comparator<AprioriAnalyze> choiceIdComparator = Comparator.comparing(AprioriAnalyze::getChoiceId);
+
+        // Sort the list using the custom Comparator
+        Collections.sort(aprioriAnalyzeList, choiceIdComparator);
+        surveyAnalyzeRepository.flush();
+    }
+
+    private void saveAprioriSecond(List<Object> dataList, AprioriAnalyze aprioriAnalyze, QuestionDetailDto questionDocument1) {
+        List<ChoiceAnalyze> choiceAnalyzeList = new ArrayList<>();
+        for (int i = 0; i < dataList.size() - 1; i++) {
+            List<Object> subList = (List<Object>) dataList.get(i + 1);
+            double support = Math.round((double) subList.get(0) * 1000) / 1000.0;
+            Long choiceId2 = Long.valueOf((Integer) subList.get(1));
+            ChoiceDetailDto choice1 = restAPIService.getChoiceDto(choiceId2);
+            ChoiceAnalyze choiceAnalyze = ChoiceAnalyze.builder()
+                    .choiceTitle(choice1.getTitle())
+                    .support(support)
+                    .aprioriAnalyze(aprioriAnalyze)
+                    .choiceId(choiceId2)
+                    .questionTitle(questionDocument1.getTitle())
+                    .build();
+            choiceAnalyzeRepository.save(choiceAnalyze);
+            choiceAnalyzeList.add(choiceAnalyze);
+        }
+        aprioriAnalyzeRepository.flush();
+    }
+
+    private void saveChi(QuestionAnalyze questionAnalyze, List<QuestionDetailDto> questionDocumentList, int size, int o, List<Object> chiList) {
+        List<ChiAnalyze> chiAnalyzeList = new ArrayList<>();
+        for (int k = 0; k < size; k++) {
+            if (questionDocumentList.get(k).getQuestionType() == 0) {
+                continue;
+            }
+            if (questionDocumentList.get(k).getTitle() == questionAnalyze.getQuestionTitle()) {
+                continue;
+            }
+            Double pValue = (Double) chiList.get(o);
+            ChiAnalyze chiAnalyze = ChiAnalyze.builder()
+                    .questionAnalyze(questionAnalyze)
+                    .pValue(pValue)
+                    .questionTitle(questionDocumentList.get(k).getTitle())
+                    .build();
+            o++;
+            chiAnalyzeRepository.save(chiAnalyze);
+            chiAnalyzeList.add(chiAnalyze);
+        }
+        questionAnalyzeRepository.flush();
+    }
+
+    private void saveCompare(QuestionAnalyze questionAnalyze, List<Object> compareList, List<QuestionDetailDto> questionList, int size) {
+        int o = 0;
+        List<CompareAnalyze> compareAnalyzeList = new ArrayList<>();
+        for (int k = 0; k < size; k++) {
+            if (questionList.get(k).getQuestionType() == 0) {
+                continue;
+            }
+            if (Objects.equals(questionList.get(k).getTitle(), questionAnalyze.getQuestionTitle())) {
+                continue;
+            }
+            ArrayList<Double> temp = (ArrayList<Double>) compareList.get(o);
+            Double pValue = temp.get(0); // Assuming you want to retrieve the first Double value from the ArrayList
+
+            CompareAnalyze compareAnalyze = CompareAnalyze.builder()
+                    .questionAnalyze(questionAnalyze)
+                    .pValue(pValue)
+                    .questionTitle(questionList.get(k).getTitle())
+                    .build();
+            o++;
+            compareAnalyzeRepository.save(compareAnalyze);
+            compareAnalyzeList.add(compareAnalyze);
+        }
+        questionAnalyzeRepository.flush();
+    }
 
     private SurveyAnalyze getSurveyAnalyze(long surveyDocumentId) {
         // 값 분리해서 Analyze DB에 저장
@@ -370,8 +351,6 @@ public class SurveyAnalyzeService {
         if (surveyAnalyze != null) {
             questionAnalyzeRepository.deleteAllBySurveyAnalyzeId(surveyAnalyze);
             aprioriAnalyzeRepository.deleteAllBySurveyAnalyzeId(surveyAnalyze);
-            surveyAnalyze.setAprioriAnalyzeList(new ArrayList<>());
-            surveyAnalyze.setQuestionAnalyzeList(new ArrayList<>());
         } else {
             surveyAnalyze = SurveyAnalyze.builder()
                     .surveyDocumentId(surveyDocumentId)
@@ -424,28 +403,27 @@ public class SurveyAnalyzeService {
         //// 서브 프로세스가 출력하는 내용을 받기 위해
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-        String line = br.readLine();
-        return line;
+        return br.readLine();
     }
 
     //    @Transactional
     public void wordCloud(String stringId) {
         long surveyDocumentId = Long.parseLong(stringId);
         // 값 분리해서 Analyze DB에 저장
-        SurveyDocument surveyDocument = restAPIService.getSurveyDocument(surveyDocumentId);
-        List<QuestionDocument> questionDocumentList = surveyDocument.getQuestionDocumentList();
-        for (QuestionDocument questionDocument : questionDocumentList) {
-            if (questionDocument.getQuestionType() != 0) {
+        SurveyDetailDto surveyDetailDto = restAPIService.getSurveyDetailDto(surveyDocumentId);
+        List<QuestionDetailDto> questionDocumentList = surveyDetailDto.getQuestionList();
+        for (QuestionDetailDto questionDetailDto : questionDocumentList) {
+            if (questionDetailDto.getQuestionType() != 0) {
                 continue;
             }
             // 주관식 문항의 id로 그 주관식 문항에 대답한 questionAnswerList를 찾아옴
             // get questionAnswers By CheckAnswerId
-            List<QuestionAnswer> questionAnswersByCheckAnswerId = restAPIService.getQuestionAnswerByCheckAnswerId(questionDocument.getId());
-//            List<QuestionAnswer> questionAnswersByCheckAnswerId = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocument.getId());
+            List<QuestionAnswerDto> questionAnswersByCheckAnswerId = restAPIService.getQuestionAnswerByCheckAnswerId(questionDetailDto.getId());
+//            List<QuestionAnswerDto> questionAnswersByCheckAnswerId = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDetailDto.getId());
 
             //wordCloud 분석
             ArrayList<String> answerList = new ArrayList<>();
-            for (QuestionAnswer questionAnswer : questionAnswersByCheckAnswerId) {
+            for (QuestionAnswerDto questionAnswer : questionAnswersByCheckAnswerId) {
                 if (questionAnswer.getQuestionType() != 0) {
                     continue;
                 }
@@ -492,10 +470,9 @@ public class SurveyAnalyzeService {
 
             // Print the sorted word counts
             log.info("Word Counts (Descending Order):");
-            List<WordCloud> wordCloudList = new ArrayList<>();
+            List<WordCloudDto> wordCloudList = new ArrayList<>();
             for (Map.Entry<String, Integer> entry : sortedList) {
-                WordCloud wordCloud = new WordCloud();
-                wordCloud.setQuestionDocument(questionDocument);
+                WordCloudDto wordCloud = new WordCloudDto();
                 wordCloud.setTitle(entry.getKey());
                 wordCloud.setCount(entry.getValue());
                 log.info(entry.getKey() + ": " + entry.getValue());
@@ -503,7 +480,7 @@ public class SurveyAnalyzeService {
             }
 
             List<WordCloudDto> wordCloudDtos = new ArrayList<>();
-            for (WordCloud wordCloud : wordCloudList) {
+            for (WordCloudDto wordCloud : wordCloudList) {
                 WordCloudDto wordCloudDto = new WordCloudDto();
                 wordCloudDto.setId(wordCloudDto.getId());
                 wordCloudDto.setTitle(wordCloud.getTitle());
@@ -511,10 +488,10 @@ public class SurveyAnalyzeService {
                 wordCloudDtos.add(wordCloudDto);
             }
 
-            // post to questionDocument to set WordCloudList
-            Long id = questionDocument.getId();
+            // post to questionDetailDto to set WordCloudList
+            Long id = questionDetailDto.getId();
             restAPIService.postToQuestionToSetWordCloud(id, wordCloudDtos);
-//            questionDocument.setWordCloudList(wordCloudList);
+//            questionDetailDto.setWordCloudList(wordCloudList);
 //            questionDocumentRepository.flush();
         }
     }
@@ -531,35 +508,20 @@ public class SurveyAnalyzeService {
         return getSurveyDetailAnalyzeDto(surveyAnalyze.getId());
     }
 
-    // SurveyDocument Response 보낼 SurveyDetailDto로 변환하는 메서드
+    // SurveyDetailDto Response 보낼 SurveyDetailDto로 변환하는 메서드
     public SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
-//        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).get();
-        SurveyDocument surveyDocument = restAPIService.getSurveyDocument(surveyDocumentId);
+        SurveyDetailDto surveyDetailDto = restAPIService.getSurveyDetailDto(surveyDocumentId);
 
-        SurveyDetailDto surveyDetailDto = new SurveyDetailDto();
-
-        // SurveyDocument에서 SurveyParticipateDto로 데이터 복사
-        surveyDetailDto.setId(surveyDocument.getId());
-        surveyDetailDto.setTitle(surveyDocument.getTitle());
-        surveyDetailDto.setDescription(surveyDocument.getDescription());
-        surveyDetailDto.setCountAnswer(surveyDocument.getCountAnswer());
-
-        List<QuestionDetailDto> questionDtos = new ArrayList<>();
-        for (QuestionDocument questionDocument : surveyDocument.getQuestionDocumentList()) {
-            QuestionDetailDto questionDto = new QuestionDetailDto();
-            questionDto.setId(questionDocument.getId());
-            questionDto.setTitle(questionDocument.getTitle());
-            questionDto.setQuestionType(questionDocument.getQuestionType());
-
-            // question type에 따라 choice 에 들어갈 내용 구분
-            // 주관식이면 choice title에 주관식 응답을 저장??
+        List<QuestionDetailDto> questionDtos = surveyDetailDto.getQuestionList();
+        for (QuestionDetailDto questionDetailDto : questionDtos) {
+            // question type에 따라 choiceDto 에 들어갈 내용 구분
+            // 주관식이면 choiceDto title에 주관식 응답을 저장??
             // 객관식 찬부식 -> 기존 방식 과 똑같이 count를 올려서 저장
-            List<ChoiceDetailDto> choiceDtos = new ArrayList<>();
-            if (questionDocument.getQuestionType() == 0) {
+            if (questionDetailDto.getQuestionType() == 0) {
                 // 주관식 답변들 리스트
-//                List<QuestionAnswer> questionAnswersByCheckAnswerId = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocument.getId());
-                List<QuestionAnswer> questionAnswersByCheckAnswerId = restAPIService.getQuestionAnswerByCheckAnswerId(questionDocument.getId());
-                for (QuestionAnswer questionAnswer : questionAnswersByCheckAnswerId) {
+//                List<QuestionAnswerDto> questionAnswersByCheckAnswerId = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDetailDto.getId());
+                List<QuestionAnswerDto> questionAnswersByCheckAnswerId = restAPIService.getQuestionAnswerByCheckAnswerId(questionDetailDto.getId());
+                for (QuestionAnswerDto questionAnswer : questionAnswersByCheckAnswerId) {
                     // 그 중에 주관식 답변만
                     if (questionAnswer.getQuestionType() == 0) {
                         ChoiceDetailDto choiceDto = new ChoiceDetailDto();
@@ -567,37 +529,11 @@ public class SurveyAnalyzeService {
                         choiceDto.setTitle(questionAnswer.getCheckAnswer());
                         choiceDto.setCount(0);
 
-                        choiceDtos.add(choiceDto);
+                        questionDetailDto.getChoiceList().add(choiceDto);
                     }
                 }
-            } else {
-                for (Choice choice : questionDocument.getChoiceList()) {
-                    ChoiceDetailDto choiceDto = new ChoiceDetailDto();
-                    choiceDto.setId(choice.getId());
-                    choiceDto.setTitle(choice.getTitle());
-                    choiceDto.setCount(choice.getCount());
-
-                    choiceDtos.add(choiceDto);
-                }
             }
-            questionDto.setChoiceList(choiceDtos);
-
-            List<WordCloudDto> wordCloudDtos = new ArrayList<>();
-            for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
-                WordCloudDto wordCloudDto = new WordCloudDto();
-                wordCloudDto.setId(wordCloud.getId());
-                wordCloudDto.setTitle(wordCloud.getTitle());
-                wordCloudDto.setCount(wordCloud.getCount());
-
-                wordCloudDtos.add(wordCloudDto);
-            }
-            questionDto.setWordCloudDtos(wordCloudDtos);
-
-            questionDtos.add(questionDto);
         }
-        surveyDetailDto.setQuestionList(questionDtos);
-
-        log.info(String.valueOf(surveyDetailDto));
         return surveyDetailDto;
     }
 
@@ -646,13 +582,13 @@ public class SurveyAnalyzeService {
             aprioriAnalyzeDto.setQuestionTitle(aprioriAnalyze.getQuestionTitle());
 
             List<ChoiceAnalyzeDto> choiceDtos = new ArrayList<>();
-            for (ChoiceAnalyze choice : aprioriAnalyze.getChoiceAnalyzeList()) {
-                ChoiceAnalyzeDto choiceDto = new ChoiceAnalyzeDto();
-                choiceDto.setId(choice.getId());
-                choiceDto.setChoiceTitle(choice.getChoiceTitle());
-                choiceDto.setSupport(choice.getSupport());
-                choiceDto.setQuestionTitle(choice.getQuestionTitle());
-                choiceDtos.add(choiceDto);
+            for (ChoiceAnalyze choiceDto : aprioriAnalyze.getChoiceAnalyzeList()) {
+                ChoiceAnalyzeDto choiceAnalyzeDto = new ChoiceAnalyzeDto();
+                choiceAnalyzeDto.setId(choiceDto.getId());
+                choiceAnalyzeDto.setChoiceTitle(choiceDto.getChoiceTitle());
+                choiceAnalyzeDto.setSupport(choiceDto.getSupport());
+                choiceAnalyzeDto.setQuestionTitle(choiceDto.getQuestionTitle());
+                choiceDtos.add(choiceAnalyzeDto);
             }
             aprioriAnalyzeDto.setChoiceAnalyzeList(choiceDtos);
             aprioriAnalyzeDtos.add(aprioriAnalyzeDto);

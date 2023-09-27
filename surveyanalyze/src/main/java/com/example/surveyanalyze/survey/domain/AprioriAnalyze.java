@@ -1,37 +1,31 @@
 package com.example.surveyanalyze.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class AprioriAnalyze {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "apriori_analyze_id")
     private Long id;
-    @Column(name = "choiceId(연관분석할 choiceId)")
     private Long choiceId;
-    @Column(name = "question_title")
     private String questionTitle;
-    @Column(name = "choice_title")
     private String choiceTitle;
 
-    @OneToMany(mappedBy = "aprioriAnalyzeId", fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonIgnore //순환참조 방지
+    @Builder.Default
     @Column(name = "choice_list")
-    private List<ChoiceAnalyze> choiceAnalyzeList;
+    @OneToMany(mappedBy = "aprioriAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ChoiceAnalyze> choiceAnalyzeList = new ArrayList<>();
 
-    @ManyToOne
-    @JsonIgnore // 순환참조 방지
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_analyze_id")
-    private SurveyAnalyze surveyAnalyzeId;
-
+    private SurveyAnalyze surveyAnalyze;
 }

@@ -1,16 +1,6 @@
 package com.example.surveyanalyze.survey.restAPI.service;
 
-import com.example.surveyanalyze.survey.domain.Choice;
-import com.example.surveyanalyze.survey.domain.QuestionAnswer;
-import com.example.surveyanalyze.survey.domain.QuestionDocument;
-import com.example.surveyanalyze.survey.domain.SurveyDocument;
-import com.example.surveyanalyze.survey.repository.aprioriAnlayze.AprioriAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.chiAnlayze.ChiAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.choiceAnalyze.ChoiceAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.compareAnlayze.CompareAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.questionAnlayze.QuestionAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.surveyAnalyze.SurveyAnalyzeRepository;
-import com.example.surveyanalyze.survey.response.WordCloudDto;
+import com.example.surveyanalyze.survey.response.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +26,7 @@ public class RestAPIService {
         this.webClient = WebClient.create(gateway);
     }
 
-    public SurveyDocument getSurveyDocument(Long surveyDocumentId) {
+    public SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET SurveyDocument");
@@ -48,20 +38,20 @@ public class RestAPIService {
         String apiUrl = "http://" + gateway + "/api/document/internal/getSurveyDocument/" + surveyDocumentId;
 
         // Make a GET request to the API and retrieve the response
-        SurveyDocument get = webClient.get()
+        SurveyDetailDto result = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
-                .bodyToMono(SurveyDocument.class)
+                .bodyToMono(SurveyDetailDto.class)
                 .block();
 
         // Process the response as needed
-        System.out.println("Request: " + get);
+        System.out.println("Request: " + result);
 
-        return get;
+        return result;
     }
 
-    public Choice getChoice(Long choiceId) {
+    public ChoiceDetailDto getChoiceDto(Long choiceId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET Choice");
@@ -71,20 +61,20 @@ public class RestAPIService {
         String apiUrl = "http://" + gateway + "/api/document/internal/getChoice/" + choiceId;
 
         // Make a GET request to the API and retrieve the response
-        Choice get = webClient.get()
+        ChoiceDetailDto result = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
-                .bodyToMono(Choice.class)
+                .bodyToMono(ChoiceDetailDto.class)
                 .block();
 
         // Process the response as needed
-        System.out.println("Request: " + get);
+        System.out.println("Request: " + result);
 
-        return get;
+        return result;
     }
 
-    public QuestionDocument getQuestionDocument(Long questionId) {
+    public QuestionDetailDto getQuestionDocument(Long questionId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET question");
@@ -94,20 +84,20 @@ public class RestAPIService {
         String apiUrl = "http://" + gateway + "/api/document/internal/getQuestion/" + questionId;
 
         // Make a GET request to the API and retrieve the response
-        QuestionDocument get = webClient.get()
+        QuestionDetailDto result = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
-                .bodyToMono(QuestionDocument.class)
+                .bodyToMono(QuestionDetailDto.class)
                 .block();
 
         // Process the response as needed
-        System.out.println("Request: " + get);
+        System.out.println("Request: " + result);
 
-        return get;
+        return result;
     }
 
-    public QuestionDocument getQuestionByChoiceId(Long choiceId) {
+    public QuestionDetailDto getQuestionByChoiceId(Long choiceId) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET question by choiceId");
@@ -117,11 +107,11 @@ public class RestAPIService {
         String apiUrl = "http://" + gateway + "/api/document/internal/getQuestionByChoiceId/" + choiceId;
 
         // Make a GET request to the API and retrieve the response
-        QuestionDocument get = webClient.get()
+        QuestionDetailDto get = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
-                .bodyToMono(QuestionDocument.class)
+                .bodyToMono(QuestionDetailDto.class)
                 .block();
 
         // Process the response as needed
@@ -130,7 +120,7 @@ public class RestAPIService {
         return get;
     }
 
-    public List<QuestionAnswer> getQuestionAnswerByCheckAnswerId(Long id) {
+    public List<QuestionAnswerDto> getQuestionAnswerByCheckAnswerId(Long id) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET questionAnswer List by checkAnswerId");
@@ -140,7 +130,7 @@ public class RestAPIService {
         String apiUrl = "http://" + gateway + "/api/answer/internal/getQuestionAnswerByCheckAnswerId/" + id;
 
         // Make a GET request to the API and retrieve the response
-        List<QuestionAnswer> questionAnswerList = webClient.get()
+        List<QuestionAnswerDto> questionAnswerList = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
@@ -148,7 +138,7 @@ public class RestAPIService {
                 .map(responseBody -> {
                     ObjectMapper mapper = new ObjectMapper();
                     try {
-                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswer>>() {
+                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {
                         });
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);

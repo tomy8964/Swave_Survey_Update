@@ -1,38 +1,33 @@
 package com.example.surveyanalyze.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class QuestionAnalyze {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "question_analyze_id")
     private Long id;
-    @Column(name = "question_title")
     private String questionTitle;
-    @Column(name = "word_cloud")
     private String wordCloud;
 
-    @OneToMany(mappedBy = "questionAnalyzeId", fetch = FetchType.LAZY, orphanRemoval = true)
-    @Column(name = "chi_list")
-    private List<ChiAnalyze> chiAnalyzeList;
+    @Builder.Default
+    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ChiAnalyze> chiAnalyzeList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "questionAnalyzeId", fetch = FetchType.LAZY, orphanRemoval = true)
-    @Column(name = "compare_list")
-    private List<CompareAnalyze> compareAnalyzeList;
+    @Builder.Default
+    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<CompareAnalyze> compareAnalyzeList = new ArrayList<>();
 
-    @ManyToOne
-    @JsonIgnore // 순환참조 방지
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_analyze_id")
-    private SurveyAnalyze surveyAnalyzeId;
-
+    private SurveyAnalyze surveyAnalyze;
 }

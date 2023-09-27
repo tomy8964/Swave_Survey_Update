@@ -1,27 +1,35 @@
 package com.example.surveyanalyze.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Entity
+
 @Getter
-@Setter
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChiAnalyze {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "chi_analyze_id")
     private Long id;
-    @Column(name = "question_title")
     private String questionTitle;
-    @Column(name = "p_value")
     private Double pValue;
 
-    @ManyToOne
-    @JsonIgnore // 순환참조 방지
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_analyze_id")
-    private QuestionAnalyze questionAnalyzeId;
+    private QuestionAnalyze questionAnalyze;
+
+    @Builder
+    public ChiAnalyze(Long id, String questionTitle, Double pValue, QuestionAnalyze questionAnalyze) {
+        this.id = id;
+        this.questionTitle = questionTitle;
+        this.pValue = pValue;
+        if (questionAnalyze != null) {
+            this.questionAnalyze = questionAnalyze;
+            questionAnalyze.getChiAnalyzeList().add(this);
+        }
+    }
 }

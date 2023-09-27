@@ -1,12 +1,9 @@
 package com.example.surveyanalyze.survey.controller;
 
-import com.example.surveyanalyze.survey.exception.InvalidTokenException;
 import com.example.surveyanalyze.survey.response.SurveyAnalyzeDto;
 import com.example.surveyanalyze.survey.response.SurveyDetailDto;
 import com.example.surveyanalyze.survey.service.SurveyAnalyzeService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -5,14 +5,10 @@ buildscript {
 }
 
 plugins {
+    id 'jacoco'
     id 'java'
     id 'org.springframework.boot' version '3.0.5'
     id 'io.spring.dependency-management' version '1.1.0'
-
-    // QueryDsl
-    //id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
-
-    //id 'org.asciidoctor.convert' version '2.2.1'
 }
 
 group = 'com.example'
@@ -52,7 +48,7 @@ dependencies {
     //WebClient
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
-    // // OAuth
+    // OAuth
     // implementation group: 'com.auth0', name: 'java-jwt', version: '3.10.2'
     // implementation 'org.springframework.boot:spring-boot-starter-security'
     // implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:'
@@ -82,17 +78,32 @@ dependencies {
     //monitoring
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
+
+    //자바 역직렬화 문제 해결 패키지
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    //Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.0'
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
 }
 
 tasks.named('test') {
     outputs.dir snippetsDir
     useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacoco.exec")
+    }
 }
 
 def querydslDir = "$buildDir/generated/querydsl"
 
 sourceSets {
-    main.java.srcDirs += [querydslDir]
+    main.java.srcDirs += [ querydslDir ]
 }
 
 tasks.withType(JavaCompile) {
@@ -103,6 +114,68 @@ clean {
     // clean 실행 시 생성된 QClass 삭제
     delete file(querydslDir)
 }
+
+jacocoTestReport {
+    reports {
+        html.enabled true
+        xml.enabled false
+        csv.enabled true
+
+// 리포트의 저장 경로를 설정합니다.
+//        html.destination file("jacoco/jacocoHtml")
+//        xml.destination file("jacoco/jacoco.xml")
+    }
+    def Qdomains = []
+
+    for (qPattern in '**/QA'..'**/QZ') { // qPattern = '**/QA', '**/QB', ... '*.QZ'
+        Qdomains.add(qPattern + '*')
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    "com/example/surveyanswer/SurveyAnswerApplication*",
+                    "com/example/surveyanswer/survey/domain/QSurveyAnswer",
+                    "com/example/surveyanswer/survey/domain/QQuestionAsnwer",
+                    "**/config/*"
+            ] + Qdomains)
+        })
+        )
+    }
+
+    finalizedBy 'jacocoTestCoverageVerification'
+}
+
+jacocoTestCoverageVerification {
+    def Qdomains = []
+
+    for (qPattern in '*.QA'..'*.QZ') { // qPattern = '*.QA', '*.QB', ... '*.QZ'
+        Qdomains.add(qPattern + '*')
+    }
+
+    violationRules { // 커버리지의 범위와 퍼센테이지를 설정합니다.
+        rule {
+            element = 'CLASS'
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.10
+            }
+
+            excludes = [] + Qdomains // 제외할 Qdomains 패턴 추가
+        }
+    }
+}
+
+jacoco {
+    // JaCoCo 버전
+    toolVersion = '0.8.8'
+
+//  테스트결과 리포트를 저장할 경로 변경
+//  default는 "$/jacoco"
+//  reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
 
 
 //tasks.named('asciidoctor') {

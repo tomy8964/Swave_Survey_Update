@@ -2,7 +2,7 @@ package com.example.surveyanswer.survey.service;
 
 import com.example.surveyanswer.survey.domain.QuestionAnswer;
 import com.example.surveyanswer.survey.domain.SurveyAnswer;
-import com.example.surveyanswer.survey.exception.InvalidTokenException;
+import com.example.surveyanswer.survey.exception.InvalidReliabilityException;
 import com.example.surveyanswer.survey.repository.questionAnswer.QuestionAnswerRepository;
 import com.example.surveyanswer.survey.repository.surveyAnswer.SurveyAnswerRepository;
 import com.example.surveyanswer.survey.request.ReliabilityChoice;
@@ -12,10 +12,9 @@ import com.example.surveyanswer.survey.response.QuestionResponseDto;
 import com.example.surveyanswer.survey.response.SurveyDetailDto;
 import com.example.surveyanswer.survey.response.SurveyResponseDto;
 import com.example.surveyanswer.survey.restAPI.service.RestAPIService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -34,15 +33,7 @@ public class SurveyAnswerService {
     private final QuestionAnswerRepository questionAnswerRepository;
     private final RestAPIService restAPIService;
 
-    // 회원 유효성 검사, token 존재하지 않으면 예외처리
-//    private static void checkInvalidToken(HttpServletRequest request) throws InvalidTokenException {
-//        if (request.getHeader("Authorization") == null) {
-//            log.info("error");
-//            throw new InvalidTokenException();
-//        }
-//        log.info("토큰 체크 완료");
-//    }
-
+    @NotNull
     private static List<ReliabilityQuestion> initReliabilityQuestion() {
         List<ReliabilityQuestion> reliabilityQuestionList = new ArrayList<>();
         List<ReliabilityChoice> choiceList1 = new ArrayList<>();
@@ -79,23 +70,40 @@ public class SurveyAnswerService {
         return reliabilityQuestionList.get(randomReliabilityQuestionNumber);
     }
 
+    private static QuestionResponseDto checkValidResponseByReliabilityTest(@NotNull SurveyResponseDto surveyResponse) {
+        QuestionResponseDto reliabilityQuestion = null;
+        for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
+            if (questionResponseDto.getAnswerId() == -1L) {
+                for (ReliabilityQuestion question : reliabilityQuestionList) {
+                    if (questionResponseDto.getTitle().equals(question.getTitle())) {
+                        if (questionResponseDto.getAnswer().equals(question.getCorrectAnswer())) {
+                            reliabilityQuestion = questionResponseDto;
+                        } else {
+                            throw new InvalidReliabilityException();
+                        }
+                    }
+                }
+            }
+        }
+        return reliabilityQuestion;
+    }
+
     // 설문 응답 참여
     public SurveyDetailDto getParticipantSurvey(Long id) {
         if (restAPIService.getSurveyDetailDto(id).getReliability()) {
-            return addReliabiltyTest(restAPIService.getSurveyDetailDto(id));
+            return addReliabilityTest(restAPIService.getSurveyDetailDto(id));
         }
         return restAPIService.getSurveyDetailDto(id);
     }
 
     // 설문 응답 저장
-    public void createSurveyAnswer(SurveyResponseDto surveyResponse) {
+    public void createSurveyAnswer(@NotNull SurveyResponseDto surveyResponse) {
         if (surveyResponse.getReliability()) {
             QuestionResponseDto reliabilityQuestion = checkValidResponseByReliabilityTest(surveyResponse);
             surveyResponse.getQuestionResponse().remove(reliabilityQuestion);
         }
         Long surveyDocumentId = surveyResponse.getId();
-        
-        // Survey Response 를 Survey Answer 에 저장하기
+
         SurveyAnswer surveyAnswer = SurveyAnswer.builder()
                 .surveyDocumentId(surveyDocumentId)
                 .title(surveyResponse.getTitle())
@@ -103,9 +111,7 @@ public class SurveyAnswerService {
                 .type(surveyResponse.getType())
                 .build();
 
-        // Survey Response 를 Question Answer 에 저장하기
         for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
-            // Question Answer 에 저장
             QuestionAnswer questionAnswer = QuestionAnswer.builder()
                     .surveyAnswer(surveyAnswer)
                     .title(questionResponseDto.getTitle())
@@ -132,40 +138,8 @@ public class SurveyAnswerService {
         restAPIService.startAnalyze(surveyDocumentId);
     }
 
-    @Nullable
-    private static QuestionResponseDto checkValidResponseByReliabilityTest(SurveyResponseDto surveyResponse) {
-        QuestionResponseDto reliabilityQuestion = null;
-        for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
-            if (questionResponseDto.getAnswerId() == -1L) {
-                for (ReliabilityQuestion question : reliabilityQuestionList) {
-                    if (questionResponseDto.getTitle().equals(question.getTitle())) {
-                        if (questionResponseDto.getAnswer().equals(question.getCorrectAnswer())) {
-                            reliabilityQuestion = questionResponseDto;
-                        } else {
-                            throw new RuntimeException("진정성 검사 실패 답변입니다. 설문 응답을 저장하지 않습니다.");
-                        }
-                    }
-                }
-            }
-        }
-        return reliabilityQuestion;
-    }
-
-    // todo : 분석 응답 리스트 불러오기
-//    public List<SurveyAnswer> readSurveyAnswerList(HttpServletRequest request, Long surveyId) throws InvalidTokenException {
-//        //Survey_Id를 가져와서 그 Survey 의 AnswerList 를 가져와야 함
-//        List<SurveyAnswer> surveyAnswerList = surveyAnswerRepository.findSurveyAnswersBySurveyDocumentId(surveyId);
-//
-//        checkInvalidToken(request);
-//
-//        return surveyAnswerList;
-//    }
-
     public List<QuestionAnswer> getQuestionAnswers(Long questionDocumentId) {
-        //Survey_Id를 가져와서 그 Survey 의 AnswerList 를 가져와야 함
-        List<QuestionAnswer> questionAnswerList = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocumentId);
-
-        return questionAnswerList;
+        return questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocumentId);
     }
 
     public List<QuestionAnswer> getQuestionAnswerByCheckAnswerId(Long id) {
@@ -177,7 +151,7 @@ public class SurveyAnswerService {
     }
 
     // 진정성 검사 추가 검증
-    private SurveyDetailDto addReliabiltyTest(SurveyDetailDto surveyDetailDto) {
+    private SurveyDetailDto addReliabilityTest(SurveyDetailDto surveyDetailDto) {
 
         QuestionDetailDto reliabilityQuestionDto;
         ReliabilityQuestion reliabilityQuestion;
