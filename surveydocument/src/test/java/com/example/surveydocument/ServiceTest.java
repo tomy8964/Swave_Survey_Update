@@ -1,8 +1,5 @@
 package com.example.surveydocument;
 
-import com.example.surveydocument.survey.domain.Design;
-import com.example.surveydocument.survey.domain.QuestionDocument;
-import com.example.surveydocument.survey.domain.Survey;
 import com.example.surveydocument.survey.domain.SurveyDocument;
 import com.example.surveydocument.survey.repository.questionDocument.QuestionDocumentRepository;
 import com.example.surveydocument.survey.repository.survey.SurveyRepository;
@@ -13,19 +10,14 @@ import com.example.surveydocument.survey.request.QuestionRequestDto;
 import com.example.surveydocument.survey.request.SurveyRequestDto;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import jakarta.transaction.Transactional;
-import okhttp3.mockwebserver.MockWebServer;
-import org.hibernate.annotations.CreationTimestamp;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.jupiter.api.TestInstance.*;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest

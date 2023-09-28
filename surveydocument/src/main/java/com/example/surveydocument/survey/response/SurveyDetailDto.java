@@ -24,6 +24,5 @@ public class SurveyDetailDto {
     private Date endDate;
     private Boolean enable;
 
-    DesignResponseDto design;
-    // getter, setter 생략
+    private DesignResponseDto design;
 }

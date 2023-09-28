@@ -74,28 +74,28 @@ public class RestAPIService {
         return result;
     }
 
-    public QuestionDetailDto getQuestionDocument(Long questionId) {
-        //REST API로 분석 시작 컨트롤러로 전달
-        // Create a WebClient instance
-        log.info("GET question");
-        WebClient webClient = WebClient.create();
-
-        // Define the API URL
-        String apiUrl = "http://" + gateway + "/api/document/internal/getQuestion/" + questionId;
-
-        // Make a GET request to the API and retrieve the response
-        QuestionDetailDto result = webClient.get()
-                .uri(apiUrl)
-                .header("Authorization", "NotNull")
-                .retrieve()
-                .bodyToMono(QuestionDetailDto.class)
-                .block();
-
-        // Process the response as needed
-        System.out.println("Request: " + result);
-
-        return result;
-    }
+//    public QuestionDetailDto getQuestionDocument(Long questionId) {
+//        //REST API로 분석 시작 컨트롤러로 전달
+//        // Create a WebClient instance
+//        log.info("GET question");
+//        WebClient webClient = WebClient.create();
+//
+//        // Define the API URL
+//        String apiUrl = "http://" + gateway + "/api/document/internal/getQuestion/" + questionId;
+//
+//        // Make a GET request to the API and retrieve the response
+//        QuestionDetailDto result = webClient.get()
+//                .uri(apiUrl)
+//                .header("Authorization", "NotNull")
+//                .retrieve()
+//                .bodyToMono(QuestionDetailDto.class)
+//                .block();
+//
+//        // Process the response as needed
+//        System.out.println("Request: " + result);
+//
+//        return result;
+//    }
 
     public QuestionDetailDto getQuestionByChoiceId(Long choiceId) {
         //REST API로 분석 시작 컨트롤러로 전달
@@ -135,13 +135,13 @@ public class RestAPIService {
                 .header("Authorization", "NotNull")
                 .retrieve()
                 .bodyToMono(String.class)
-                .map(responseBody -> {
+                .<List<QuestionAnswerDto>>handle((responseBody, sink) -> {
                     ObjectMapper mapper = new ObjectMapper();
                     try {
-                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {
-                        });
+                        sink.next(mapper.readValue(responseBody, new TypeReference<>() {
+                        }));
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        sink.error(new RuntimeException(e));
                     }
                 })
                 .blockOptional()
@@ -153,25 +153,25 @@ public class RestAPIService {
         return questionAnswerList;
     }
 
-    public void postToQuestionToSetWordCloud(Long id, List<WordCloudDto> wordCloudList) {
-        //REST API로 분석 시작 컨트롤러로 전달
-        // Create a WebClient instance
-        log.info("GET question by choiceId");
-        WebClient webClient = WebClient.create();
-
-        // Define the API URL
-        String apiUrl = "http://" + gateway + "/api/document/internal/setWordCloud/" + id;
-
-        // Make a GET request to the API and retrieve the response
-        String response = webClient.post()
-                .uri(apiUrl)
-                .header("Authorization", "NotNull")
-                .bodyValue(wordCloudList)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        // Process the response as needed
-        System.out.println("Request: " + response);
-    }
+//    public void postToQuestionToSetWordCloud(Long id, List<WordCloudDto> wordCloudList) {
+//        //REST API로 분석 시작 컨트롤러로 전달
+//        // Create a WebClient instance
+//        log.info("GET question by choiceId");
+//        WebClient webClient = WebClient.create();
+//
+//        // Define the API URL
+//        String apiUrl = "http://" + gateway + "/api/document/internal/setWordCloud/" + id;
+//
+//        // Make a GET request to the API and retrieve the response
+//        String response = webClient.post()
+//                .uri(apiUrl)
+//                .header("Authorization", "NotNull")
+//                .bodyValue(wordCloudList)
+//                .retrieve()
+//                .bodyToMono(String.class)
+//                .block();
+//
+//        // Process the response as needed
+//        System.out.println("Request: " + response);
+//    }
 }

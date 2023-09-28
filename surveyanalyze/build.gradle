@@ -106,7 +106,7 @@ sourceSets {
     main.java.srcDirs += [ querydslDir ]
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
 }
 
@@ -133,9 +133,7 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                    "com/example/surveyanswer/SurveyAnswerApplication*",
-                    "com/example/surveyanswer/survey/domain/QSurveyAnswer",
-                    "com/example/surveyanswer/survey/domain/QQuestionAsnwer",
+                    "com/example/surveyanalyze/SurveyAnalyzeApplication*",
                     "**/config/*"
             ] + Qdomains)
         })

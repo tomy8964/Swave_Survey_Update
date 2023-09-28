@@ -9,19 +9,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class QuestionAnswerDto {
     private Long id;
-    private String title;
     private int questionType;
     private String checkAnswer;
-    private Long checkAnswerId;
-    private Long surveyDocumentId;
 
     @Builder
-    public QuestionAnswerDto(Long id, String title, int questionType, String checkAnswer, Long checkAnswerId, Long surveyDocumentId) {
+    public QuestionAnswerDto(Long id, int questionType, String checkAnswer) {
         this.id = id;
-        this.title = title;
         this.questionType = questionType;
         this.checkAnswer = checkAnswer;
-        this.checkAnswerId = checkAnswerId;
-        this.surveyDocumentId = surveyDocumentId;
     }
 }

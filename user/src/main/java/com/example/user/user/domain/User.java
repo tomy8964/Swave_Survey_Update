@@ -29,6 +29,8 @@ public class User {
     private String nickname;
     private String email;
     private String provider;
+
+    @Enumerated(EnumType.STRING)
     private UserRole userRole;
     private String description;
 

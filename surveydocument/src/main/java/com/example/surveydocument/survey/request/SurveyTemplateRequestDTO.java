@@ -1,7 +1,5 @@
 package com.example.surveydocument.survey.request;
 
-import com.example.surveydocument.survey.domain.Design;
-import com.example.surveydocument.survey.domain.DesignTemplate;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;

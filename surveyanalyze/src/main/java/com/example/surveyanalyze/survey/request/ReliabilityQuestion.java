@@ -10,5 +10,4 @@ public class ReliabilityQuestion {
     private int type;
     private List<ReliabilityChoice> choiceList;
     private String correct_answer;
-
 }

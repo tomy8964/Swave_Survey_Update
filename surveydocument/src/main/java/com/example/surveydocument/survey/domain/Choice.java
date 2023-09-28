@@ -1,15 +1,20 @@
 package com.example.surveydocument.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @Entity
+@NoArgsConstructor
+@Where(clause = "is_deleted = false")
+@SQLDelete(sql = "UPDATE choice SET is_deleted = true WHERE choice_id = ?")
 public class Choice {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "choice_id")
     private Long id;
     @Column(name = "choice_title")
@@ -17,15 +22,25 @@ public class Choice {
     @Column(name = "choice_count")
     private int count;
 
-    @ManyToOne
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
-    private QuestionDocument question_id;
+    private QuestionDocument questionDocument;
+
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
+
+    public void addCount() {
+        this.count++;
+    }
 
     @Builder
-    public Choice(String title, QuestionDocument question_id,  int count) {
+    public Choice(String title, int count, QuestionDocument questionDocument) {
         this.title = title;
-        this.question_id = question_id;
         this.count = count;
+        if (questionDocument != null) {
+            this.questionDocument = questionDocument;
+            questionDocument.getChoiceList().add(this);
+        }
     }
 }

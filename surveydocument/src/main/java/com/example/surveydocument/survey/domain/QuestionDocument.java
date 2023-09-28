@@ -1,17 +1,21 @@
 package com.example.surveydocument.survey.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
+@Where(clause = "is_deleted = false")
+@SQLDelete(sql = "UPDATE question_document SET is_deleted = true WHERE question_document_id = ?")
 public class QuestionDocument {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "question_id")
     private Long id;
     @Column(name = "question_title")
@@ -19,38 +23,33 @@ public class QuestionDocument {
     @Column(name = "question_type")
     private int questionType;
 
-    @OneToMany(mappedBy = "questionDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "questionDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Column(name = "wordCloud_list")
-    private List<WordCloud> wordCloudList;
+    @Builder.Default
+    private List<WordCloud> wordCloudList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question_id", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "questionDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Column(name = "choice_list")
-    private List<Choice> choiceList;
+    @Builder.Default
+    private List<Choice> choiceList = new ArrayList<>();
 
-    @ManyToOne
-    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_document_id")
-    private SurveyDocument surveyDocumentId;
+    private SurveyDocument surveyDocument;
 
-    // 생성자 오버로딩
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
+
     @Builder
-    // 객관식 생성자
-    public QuestionDocument(List<WordCloud> wordCloudList, SurveyDocument surveyDocument, String title, int questionType, List<Choice> choiceList) {
-        this.surveyDocumentId = surveyDocument;
+    public QuestionDocument(String title, int questionType, List<WordCloud> wordCloudList, List<Choice> choiceList, SurveyDocument surveyDocument) {
         this.title = title;
         this.questionType = questionType;
-        this.choiceList = choiceList;
         this.wordCloudList = wordCloudList;
-    }
-
-    @Builder
-    // 주관식, 찬부신 생성자
-    public QuestionDocument(String title, int questionType) {
-        this.title = title;
-        this.questionType = questionType;
-    }
-
-    public void setChoice(Choice choice) {
-        this.choiceList.add(choice);
+        this.choiceList = choiceList;
+        if (surveyDocument != null) {
+            this.surveyDocument = surveyDocument;
+            surveyDocument.getQuestionDocumentList().add(this);
+        }
     }
 }

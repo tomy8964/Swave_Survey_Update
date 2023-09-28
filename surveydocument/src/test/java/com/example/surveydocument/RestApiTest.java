@@ -2,11 +2,9 @@ package com.example.surveydocument;
 
 import com.example.surveydocument.restAPI.service.InterRestApiSurveyDocumentService;
 import com.example.surveydocument.restAPI.service.OuterRestApiSurveyDocumentService;
-import com.example.surveydocument.survey.domain.Survey;
 import com.example.surveydocument.survey.repository.survey.SurveyRepository;
 import com.example.surveydocument.survey.repository.surveyDocument.SurveyDocumentRepository;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
-import com.example.surveydocument.util.OAuth.JwtProperties;
 import okhttp3.mockwebserver.MockWebServer;
 import org.aspectj.bridge.Message;
 import org.junit.jupiter.api.*;
@@ -14,12 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import static org.assertj.core.api.Assertions.*;
 import java.io.IOException;
-import java.util.ArrayList;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 public class RestApiTest {
+    private static MockWebServer mockWebServer;
     @Autowired
     SurveyDocumentService surveyDocumentService;
     @Autowired
@@ -30,8 +30,6 @@ public class RestApiTest {
     InterRestApiSurveyDocumentService interApiService;
     @Autowired
     SurveyRepository surveyRepository;
-
-    private static MockWebServer mockWebServer;
     String host;
 
     @BeforeAll
@@ -53,11 +51,12 @@ public class RestApiTest {
         );
     }
 
-    @Test @DisplayName("현재 유저 정보 받아오기 Test")
+    @Test
+    @DisplayName("현재 유저 정보 받아오기 Test")
     void API_test1() {
         // given
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("Authorization", JwtProperties.HEADER_STRING);
+        request.addHeader("Authorization", "");
 
         // when
         Long getUser = apiService.getCurrentUserFromUser(request);
@@ -66,7 +65,8 @@ public class RestApiTest {
         assertThatThrownBy(() -> apiService.getCurrentUserFromUser(request)).hasMessage(String.valueOf(Message.ERROR));
     }
 
-    @Test @DisplayName("User에 Survey 정보 보내기")
+    @Test
+    @DisplayName("User에 Survey 정보 보내기")
     void API_test2() {
 //        // given
 //        MockHttpServletRequest request = new MockHttpServletRequest();
@@ -82,12 +82,13 @@ public class RestApiTest {
 
     }
 
-    @Test @DisplayName("saveUserInSurvey")
+    @Test
+    @DisplayName("saveUserInSurvey")
     void API_test3() {
         Long check = 1L;
         interApiService.saveUserInSurvey(check);
         Survey byUserCode = surveyRepository.findByUserCode(check);
 
-        assertThat(check).isEqualTo(byUserCode.getUserCode());
+        assertThat(check).isEqualTo(byUserCode.getUserId());
     }
 }

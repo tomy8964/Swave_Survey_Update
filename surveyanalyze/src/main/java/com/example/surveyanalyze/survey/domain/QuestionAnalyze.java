@@ -10,7 +10,6 @@ import java.util.List;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class QuestionAnalyze {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,14 +19,26 @@ public class QuestionAnalyze {
     private String wordCloud;
 
     @Builder.Default
-    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChiAnalyze> chiAnalyzeList = new ArrayList<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "questionAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CompareAnalyze> compareAnalyzeList = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "survey_analyze_id")
     private SurveyAnalyze surveyAnalyze;
+
+    public QuestionAnalyze(Long id, String questionTitle, String wordCloud, List<ChiAnalyze> chiAnalyzeList, List<CompareAnalyze> compareAnalyzeList, SurveyAnalyze surveyAnalyze) {
+        this.id = id;
+        this.questionTitle = questionTitle;
+        this.wordCloud = wordCloud;
+        this.chiAnalyzeList = chiAnalyzeList;
+        this.compareAnalyzeList = compareAnalyzeList;
+        if (surveyAnalyze != null) {
+            this.surveyAnalyze = surveyAnalyze;
+            surveyAnalyze.getQuestionAnalyzeList().add(this);
+        }
+    }
 }

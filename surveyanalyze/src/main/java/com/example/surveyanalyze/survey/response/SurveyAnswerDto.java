@@ -1,6 +1,5 @@
 package com.example.surveyanalyze.survey.response;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,14 +15,4 @@ public class SurveyAnswerDto {
     private List<QuestionAnswerDto> questionAnswersList;
 
     private Long surveyDocumentId;
-
-    @Builder
-    public SurveyAnswerDto(Long id, int type, String title, String description, List<QuestionAnswerDto> questionAnswersList, Long surveyDocumentId) {
-        this.id = id;
-        this.type = type;
-        this.title = title;
-        this.description = description;
-        this.questionAnswersList = questionAnswersList;
-        this.surveyDocumentId = surveyDocumentId;
-    }
 }

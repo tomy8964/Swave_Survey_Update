@@ -6,5 +6,4 @@ import lombok.Data;
 public class ReliabilityChoice {
     private int id;
     private String choiceName;
-
 }

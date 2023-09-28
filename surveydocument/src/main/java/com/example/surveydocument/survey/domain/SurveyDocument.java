@@ -1,23 +1,31 @@
 package com.example.surveydocument.survey.domain;
 
-import com.example.surveydocument.survey.request.DateDto;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.example.surveydocument.survey.request.ChoiceRequestDto;
+import com.example.surveydocument.survey.request.QuestionRequestDto;
+import com.example.surveydocument.survey.request.SurveyRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@Entity
+@Getter
+@Entity(name = "survey_document")
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Where(clause = "is_deleted = false")
+@SQLDelete(sql = "UPDATE survey_document SET is_deleted = true WHERE survey_document_id = ?")
 public class SurveyDocument {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "survey_document_id")
     private Long id;
+    @Column(name = "user_id")
+    private Long userId;
     @Column(name = "survey_title")
     private String title;
     @Column(name = "survey_type")
@@ -30,47 +38,22 @@ public class SurveyDocument {
     @Column(name = "answer_count")
     private int countAnswer;
 
-    @Column(name = "isDeleted")
-    private boolean isDeleted = false;
+    @Builder.Default
+    @Column(name = "is_deleted")
+    private boolean isDeleted = Boolean.FALSE;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JsonIgnore // 순환참조 방지
-    @JoinColumn(name = "Design_id")
+    @OneToOne(mappedBy = "surveyDocument", cascade = CascadeType.ALL, orphanRemoval = true)
     private Design design;
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JsonIgnore // 순환참조 방지
-    @JoinColumn(name = "Date_id")
+
+    @OneToOne(mappedBy = "surveyDocument", cascade = CascadeType.ALL, orphanRemoval = true)
     private DateManagement date;
 
-    @Column(name = "reliability")
     private Boolean reliability;
 
     @Column(name = "content")
-    @OneToMany(mappedBy = "surveyDocumentId", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private List<QuestionDocument> questionDocumentList;
-
-    @ManyToOne
-    @JsonIgnore // 순환참조 방지
-    @JoinColumn(name = "survey_id")
-    private Survey survey;
-
-    @Builder
-    public SurveyDocument(int countAnswer, Survey survey, String title, int type,Boolean reliability, String description, List<QuestionDocument> questionDocumentList, DateManagement dateManagement, Design design) {
-        this.survey = survey;
-        this.title = title;
-        this.type = type;
-        this.description = description;
-        this.questionDocumentList = questionDocumentList;
-        this.reliability=reliability;
-        this.countAnswer = countAnswer;
-        this.date = dateManagement;
-        this.design = design;
-    }
-
-    // 문항 list 에 넣어주기
-    public void setQuestion(QuestionDocument questionDocument) {
-        this.questionDocumentList.add(questionDocument);
-    }
+    @Builder.Default
+    @OneToMany(mappedBy = "surveyDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuestionDocument> questionDocumentList = new ArrayList<>();
 
     // 날짜 넣기
     public void setDesign(Design design) {
@@ -80,5 +63,38 @@ public class SurveyDocument {
     // 디자인 넣기
     public void setDate(DateManagement date) {
         this.date = date;
+    }
+
+    public void addCountAnswer() {
+        this.countAnswer++;
+    }
+
+    public void updateSurvey(SurveyRequestDto requestDto) {
+        this.title = requestDto.getTitle();
+        this.description = requestDto.getDescription();
+        this.type = requestDto.getType();
+
+        // Question List 수정
+        // survey document 의 Question List 초기화
+        this.getQuestionDocumentList().clear();
+
+        for (QuestionRequestDto questionRequestDto : requestDto.getQuestionRequest()) {
+            QuestionDocument question = QuestionDocument.builder()
+                    .surveyDocument(this)
+                    .title(questionRequestDto.getTitle())
+                    .questionType(questionRequestDto.getType())
+                    .build();
+
+            if (questionRequestDto.getType() == 0) continue; // 주관식
+
+            // 객관식, 찬부식일 경우 선지 저장
+            for (ChoiceRequestDto choiceRequestDto : questionRequestDto.getChoiceList()) {
+                Choice.builder()
+                        .questionDocument(question)
+                        .title(choiceRequestDto.getChoiceName())
+                        .count(0)
+                        .build();
+            }
+        }
     }
 }

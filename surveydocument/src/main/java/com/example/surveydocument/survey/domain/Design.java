@@ -1,41 +1,32 @@
 package com.example.surveydocument.survey.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Data
+@Getter
 @NoArgsConstructor
 public class Design {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Design_id")
-    private Long Design_id;
-
-    @Column(name = "font")
+    @Column(name = "design_id")
+    private Long id;
     private String font;
-
-    @Column(name = "font_size")
     private int fontSize;
-
-    @Column(name = "back_color")
     private String backColor;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "survey_document_id")
+    private SurveyDocument surveyDocument;
+
     @Builder
-    public Design(String font, int fontSize, String backColor) {
+    public Design(String font, int fontSize, String backColor, SurveyDocument surveyDocument) {
         this.font = font;
         this.fontSize = fontSize;
         this.backColor = backColor;
-    }
-
-    // Request -> Entity
-    public static Design designRequestToEntity(String font, int fontSize, String backColor) {
-        return Design.builder()
-                .font(font)
-                .fontSize(fontSize)
-                .backColor(backColor)
-                .build();
+        if (surveyDocument != null) {
+            this.surveyDocument = surveyDocument;
+            surveyDocument.setDesign(this);
+        }
     }
 }

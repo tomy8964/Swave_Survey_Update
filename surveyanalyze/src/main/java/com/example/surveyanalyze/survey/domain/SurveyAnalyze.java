@@ -19,11 +19,11 @@ public class SurveyAnalyze {
     private Long surveyDocumentId;
 
     @Builder.Default
-    @OneToMany(mappedBy = "surveyAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "surveyAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionAnalyze> questionAnalyzeList = new ArrayList<>();
 
     @Builder.Default
     @Column(name = "apriori_list")
-    @OneToMany(mappedBy = "surveyAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "surveyAnalyze", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AprioriAnalyze> aprioriAnalyzeList = new ArrayList<>();
 }

@@ -1,12 +1,5 @@
-package com.example.surveyanalyze.survey.service;
+package com.example.surveyanalyze.survey.controller;
 
-import com.example.surveyanalyze.survey.exception.InvalidPythonException;
-import com.example.surveyanalyze.survey.repository.aprioriAnlayze.AprioriAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.chiAnlayze.ChiAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.choiceAnalyze.ChoiceAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.compareAnlayze.CompareAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.questionAnlayze.QuestionAnalyzeRepository;
-import com.example.surveyanalyze.survey.repository.surveyAnalyze.SurveyAnalyzeRepository;
 import com.example.surveyanalyze.survey.response.ChoiceDetailDto;
 import com.example.surveyanalyze.survey.response.QuestionAnswerDto;
 import com.example.surveyanalyze.survey.response.QuestionDetailDto;
@@ -14,8 +7,6 @@ import com.example.surveyanalyze.survey.response.SurveyDetailDto;
 import com.example.surveyanalyze.survey.restAPI.service.RestAPIService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -23,11 +14,14 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -36,29 +30,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @SpringBootTest
 @Transactional
-public class SurveyAnalyzeServiceTest {
+@AutoConfigureMockMvc
+public class SurveyAnalyzeExternalControllerTest {
 
-    @PersistenceContext
-    EntityManager em;
-
-    //    @Autowired
-    private SurveyAnalyzeService surveyAnalyzeService;
     @Autowired
-    private ChiAnalyzeRepository chiAnalyzeRepository;
-    @Autowired
-    private CompareAnalyzeRepository compareAnalyzeRepository;
-    @Autowired
-    private AprioriAnalyzeRepository aprioriAnalyzeRepository;
-    @Autowired
-    private ChoiceAnalyzeRepository choiceAnalyzeRepository;
-    @Autowired
-    private QuestionAnalyzeRepository questionAnalyzeRepository;
-    @Autowired
-    private SurveyAnalyzeRepository surveyAnalyzeRepository;
+    /*
+      웹 API 테스트할 때 사용
+      스프링 MVC 테스트의 시작점
+      HTTP GET,POST 등에 대해 API 테스트 가능
+      */
+            MockMvc mockMvc;
     @Autowired
     private RestAPIService restAPIService;
     private MockWebServer mockWebServer;
@@ -262,14 +245,6 @@ public class SurveyAnalyzeServiceTest {
 
         // Initialize other dependencies and the service under test
         MockitoAnnotations.openMocks(this);
-        surveyAnalyzeService = new SurveyAnalyzeService(
-                chiAnalyzeRepository,
-                compareAnalyzeRepository,
-                aprioriAnalyzeRepository,
-                choiceAnalyzeRepository,
-                questionAnalyzeRepository,
-                surveyAnalyzeRepository,
-                restAPIService);
 
         // Update the base URL of the service to use the mock server
         restAPIService.setGateway(baseUrl);
@@ -282,30 +257,25 @@ public class SurveyAnalyzeServiceTest {
     }
 
     @Test
-    public void analyze() {
-        assertThrows(InvalidPythonException.class, () -> surveyAnalyzeService.analyze("1"));
-    }
-
-
-    @Test
-    void analyzeTest() {
-        surveyAnalyzeService.analyze("-1");
-        em.flush();
-        em.clear();
-        System.out.println("second analyze start");
-        surveyAnalyzeService.analyze("-1");
+    void readSurvey() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/api/analyze/external/research/survey/load/-1"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult);
     }
 
     @Test
-    @DisplayName("Read AnalyzeDto")
-    void readSurveyDetailAnalyze() {
-        surveyAnalyzeService.analyze("-1");
-        surveyAnalyzeService.readSurveyDetailAnalyze(-1L);
+    void readDetailAnalyze() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/api/analyze/external/research/analyze/-1"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult);
     }
 
     @Test
-    void wordCloudPython() {
-        surveyAnalyzeService.wordCloudPython("-1L");
+    void startAnalyze() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/api/analyze/internal/research/analyze/create")
+                        .content("-1"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult);
     }
 
 }
