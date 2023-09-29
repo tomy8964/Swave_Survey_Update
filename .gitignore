@@ -24,11 +24,6 @@ hs_err_pid*
 replay_pid*
 
 
-# yml ignore
-*.yml
-*.properties
-*.yml
-
 HELP.md
 .gradle
 build/
@@ -67,9 +62,7 @@ out/
 ### VS Code ###
 .vscode/
 
-### yml ###
-*.yml
-
-/generated
 
 *.html
+
+generated
