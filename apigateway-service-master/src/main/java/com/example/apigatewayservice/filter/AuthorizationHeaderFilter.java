@@ -27,9 +27,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     Environment env;
     private final ObjectMapper objectMapper;
 
-//    @Autowired
-//    UserRepository userRepository;
-
     public AuthorizationHeaderFilter(Environment env, ObjectMapper objectMapper) {
         super(Config.class);
         this.env = env;
@@ -42,13 +39,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
             ServerHttpRequest request = exchange.getRequest();
 
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-//                return onError(exchange, "no authorizition header", HttpStatus.UNAUTHORIZED);
-//                ServerHttpResponse response = exchange.getResponse();
-//                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-//                response.getHeaders().add("Content-Type", "text/plain");
-//                response.getHeaders().add("Cache-Control", "no-store");
-//                return response.writeWith(Mono.just(response.bufferFactory().wrap("No Unauthorized".getBytes())));
-
                 ServerHttpResponse response = exchange.getResponse();
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
@@ -70,12 +60,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
             if (!isJwtValid(jwt)) {
                 System.out.println("error");
-//                ServerHttpResponse response = exchange.getResponse();
-//                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-//                response.getHeaders().add("Content-Type", "text/plain");
-//                response.getHeaders().add("Cache-Control", "no-store");
-//                return response.writeWith(Mono.just(response.bufferFactory().wrap("Unauthorized message".getBytes())));
-                // Set unauthorized status and write a custom JSON response
                 ServerHttpResponse response = exchange.getResponse();
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
@@ -94,32 +78,14 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     }
 
     private boolean isJwtValid(String jwt) {
-        Long userCode = null;
-        boolean returnValue = true;
-        String nickname = null;
+        boolean returnValue;
         try {
-            userCode = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("id").asLong();
-            nickname = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("nickname").asString();
-            System.out.println(userCode);
-            System.out.println(nickname);
+            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("id").asLong();
+            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("nickname").asString();
             returnValue = true;
         }catch (Exception e){
             returnValue = false;
         }
-//        String subject = null;
-//        Long userCode = null;
-//        try {
-//            subject = Jwts.parserBuilder().setSigningKey(env.getProperty("token.secret")).build()
-//                    .parseClaimsJws(jwt).getBody()
-//                    .getSubject();
-//            userCode = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("id").asLong();
-//            System.out.println(userCode);
-//        } catch (Exception exception) {
-//            returnValue = false;
-//        }
-//        if (subject == null || subject.isEmpty()) {
-//            returnValue = false;
-//        }
 
         return returnValue;
     }

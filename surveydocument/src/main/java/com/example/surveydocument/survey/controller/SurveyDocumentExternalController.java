@@ -6,13 +6,12 @@ import com.example.surveydocument.survey.request.PageRequestDto;
 import com.example.surveydocument.survey.request.SurveyRequestDto;
 import com.example.surveydocument.survey.response.ManagementResponseDto;
 import com.example.surveydocument.survey.response.SurveyDetailDto;
+import com.example.surveydocument.survey.response.SurveyPageDto;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,17 +27,11 @@ public class SurveyDocumentExternalController {
         return surveyService.createSurvey(request, surveyForm);
     }
 
-    // grid 로 조회
-//    @PostMapping(value = "/survey-list-grid")
-//    public List<SurveyDocument> readListGrid(HttpServletRequest request, @RequestBody PageRequestDto pageRequest) {
-//        return surveyService.readSurveyListByGrid(request, pageRequest);
-//    }
-
     // list 로 조회
-//    @PostMapping(value = "/survey-list")
-//    public Page<SurveyDocument> readList(HttpServletRequest request, @RequestBody PageRequestDto pageRequest) {
-//        return surveyService.readSurveyList(request, pageRequest);
-//    }
+    @PostMapping(value = "/survey-list")
+    public Page<SurveyPageDto> readList(HttpServletRequest request, @RequestBody PageRequestDto pageRequest) {
+        return surveyService.readSurveyList(request, pageRequest);
+    }
 
     @GetMapping(value = "/survey-list/{id}")
     public SurveyDetailDto readDetail(@PathVariable Long id) {

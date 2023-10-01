@@ -7,10 +7,7 @@ import com.example.surveyanswer.survey.repository.questionAnswer.QuestionAnswerR
 import com.example.surveyanswer.survey.repository.surveyAnswer.SurveyAnswerRepository;
 import com.example.surveyanswer.survey.request.ReliabilityChoice;
 import com.example.surveyanswer.survey.request.ReliabilityQuestion;
-import com.example.surveyanswer.survey.response.QuestionDetailDto;
-import com.example.surveyanswer.survey.response.QuestionResponseDto;
-import com.example.surveyanswer.survey.response.SurveyDetailDto;
-import com.example.surveyanswer.survey.response.SurveyResponseDto;
+import com.example.surveyanswer.survey.response.*;
 import com.example.surveyanswer.survey.restAPI.service.RestAPIService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +108,8 @@ public class SurveyAnswerService {
                 .type(surveyResponse.getType())
                 .build();
 
+        surveyAnswerRepository.save(surveyAnswer);
+
         for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
             QuestionAnswer questionAnswer = QuestionAnswer.builder()
                     .surveyAnswer(surveyAnswer)
@@ -142,8 +141,17 @@ public class SurveyAnswerService {
         return questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocumentId);
     }
 
-    public List<QuestionAnswer> getQuestionAnswerByCheckAnswerId(Long id) {
-        return questionAnswerRepository.findQuestionAnswersByCheckAnswerId(id);
+    public List<QuestionAnswerDto> getQuestionAnswerByCheckAnswerId(Long id) {
+        List<QuestionAnswer> questionAnswers = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(id);
+        List<QuestionAnswerDto> questionAnswerDtoList = new ArrayList<>();
+        for (QuestionAnswer questionAnswer : questionAnswers) {
+            QuestionAnswerDto questionAnswerDto = new QuestionAnswerDto();
+            questionAnswerDto.setCheckAnswer(questionAnswer.getCheckAnswer());
+            questionAnswerDto.setQuestionType(questionAnswer.getQuestionType());
+            questionAnswerDto.setId(questionAnswer.getId());
+            questionAnswerDtoList.add(questionAnswerDto);
+        }
+        return questionAnswerDtoList;
     }
 
     public List<SurveyAnswer> getSurveyAnswersBySurveyDocumentId(Long id) {

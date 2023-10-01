@@ -35,7 +35,7 @@ public class RestAPIService {
                 .build();
 
         // Define the API URL
-        String apiUrl = "http://" + gateway + "/api/document/internal/getSurveyDocument/" + surveyDocumentId;
+        String apiUrl = "http://" + gateway + "/api/document/internal/getSurveyDocument2/" + surveyDocumentId;
 
         // Make a GET request to the API and retrieve the response
         SurveyDetailDto result = webClient.get()

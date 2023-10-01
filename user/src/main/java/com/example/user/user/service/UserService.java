@@ -30,8 +30,7 @@ public class UserService {
         this.oAuthService = oAuthService;
     }
 
-    public User getUserByJWT(HttpServletRequest request) { //(1)
-//        Long userCode = (Long) request.getAttribute("userCode");
+    public User getUserByJWT(HttpServletRequest request) {
         String jwtHeader = (request).getHeader(JwtProperties.HEADER_STRING);
         String token = jwtHeader.replace(JwtProperties.TOKEN_PREFIX, "");
         Long userId = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("id").asLong();
@@ -63,6 +62,7 @@ public class UserService {
         return findUser.getId().toString();
     }
 
+    @Transactional
     public String deleteUser(HttpServletRequest request) {
         User user = getUserByJWT(request);
         user.setIsDeleted(true);

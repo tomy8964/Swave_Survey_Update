@@ -125,15 +125,7 @@ public class SurveyDocumentService {
 
     // list method 로 SurveyDocument 조회
     public Page<SurveyPageDto> readSurveyList(HttpServletRequest request1, PageRequestDto request2) {
-
-        // User Module 에서 현재 유저 가져오기
         Long userCode = apiService.getCurrentUserFromUser(request1);
-
-        // Request Method
-        // 1. view Method : grid or list
-        // 2. what page number
-        // 3. sort on What : date or title
-        // 4. sort on How : ascending or descending
 
         PageRequest pageRequest = PageRequest.of(request2.getPage(), 10);
 
@@ -150,6 +142,7 @@ public class SurveyDocumentService {
 
     @Transactional
     public void countChoice(Long choiceId) {
+        log.info("countChoice");
 //        // survey document id 값을 키로 하는 lock 을 조회합니다.
 //        RLock rLock = redissonClient.getLock("choice : lock");
 //        // Lock 획득 시도
@@ -174,7 +167,10 @@ public class SurveyDocumentService {
 //            // 조회수 증가 로직 실행
 //            try {
         Optional<Choice> getChoice = choiceRepository.findById(choiceId);
-        getChoice.ifPresent(Choice::addCount);
+        if (getChoice.isPresent()) {
+            Choice choice = getChoice.get();
+            choice.addCount();
+        }
 //                // 실행하면 커밋후 트랜잭션 종료
 //                transactionManager.commit(status);
 //                log.info(Thread.currentThread().getName() + " 커밋 후 트랜잭션 종료");
@@ -317,16 +313,21 @@ public class SurveyDocumentService {
         return surveyDetailDto;
     }
 
-    public Choice getChoice(Long id) {
-        return choiceRepository.findById(id).orElse(null);
+    public ChoiceDetailDto getChoice(Long id) {
+        Choice choice = choiceRepository.findById(id).orElse(null);
+        ChoiceDetailDto choiceDetailDto = new ChoiceDetailDto();
+        choiceDetailDto.setId(choice.getId());
+        choiceDetailDto.setTitle(choice.getTitle());
+        choiceDetailDto.setCount(choice.getCount());
+        return choiceDetailDto;
     }
 
-    public QuestionDocument getQuestion(Long id) {
-        return questionDocumentRepository.findById(id).orElse(null);
+    public QuestionDetailDto getQuestion(Long id) {
+        return getQuestionDto(questionDocumentRepository.findById(id).orElse(null));
     }
 
-    public QuestionDocument getQuestionByChoiceId(Long id) {
-        return choiceRepository.findById(id).map(Choice::getQuestionDocument).orElse(null);
+    public QuestionDetailDto getQuestionByChoiceId(Long id) {
+        return getQuestionDto(choiceRepository.findById(id).map(Choice::getQuestionDocument).orElse(null));
     }
 
 //    @Transactional
@@ -379,4 +380,129 @@ public class SurveyDocumentService {
                 .enable(document.getDate().getIsEnabled())
                 .build()).orElse(null);
     }
+
+
+    public SurveyDetailDto2 readSurveyDetail2(Long surveyDocumentId) {
+        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).get();
+        SurveyDetailDto2 surveyDetailDto = new SurveyDetailDto2();
+
+        // SurveyDocument에서 SurveyDetailDto로 데이터 복사
+        surveyDetailDto.setId(surveyDocument.getId());
+        surveyDetailDto.setTitle(surveyDocument.getTitle());
+        surveyDetailDto.setDescription(surveyDocument.getDescription());
+
+        // 디자인
+        DesignResponseDto designResponse = new DesignResponseDto();
+        designResponse.setFont(surveyDocument.getDesign().getFont());
+        designResponse.setFontSize(surveyDocument.getDesign().getFontSize());
+        designResponse.setBackColor(surveyDocument.getDesign().getBackColor());
+
+        List<QuestionDetailDto> questionDtos = new ArrayList<>();
+        for (QuestionDocument questionDocument : surveyDocument.getQuestionDocumentList()) {
+            QuestionDetailDto questionDto = new QuestionDetailDto();
+            questionDto.setId(questionDocument.getId());
+            questionDto.setTitle(questionDocument.getTitle());
+            questionDto.setQuestionType(questionDocument.getQuestionType());
+
+            // question type에 따라 choice 에 들어갈 내용 구분
+            // 주관식이면 choice title에 주관식 응답을 저장??
+            // 객관식 찬부식 -> 기존 방식 과 똑같이 count를 올려서 저장
+            List<ChoiceDetailDto> choiceDtos = new ArrayList<>();
+            if (questionDocument.getQuestionType() == 0) {
+                // 주관식 답변들 리스트
+                // REST API GET questionAnswersByCheckAnswerId
+                List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
+                for (QuestionAnswerDto questionAnswer : questionAnswerList) {
+                    // 그 중에 주관식 답변만
+                    if (questionAnswer.getQuestionType() == 0) {
+                        ChoiceDetailDto choiceDto = new ChoiceDetailDto();
+                        choiceDto.setId(questionAnswer.getId());
+                        choiceDto.setTitle(questionAnswer.getCheckAnswer());
+                        choiceDto.setCount(0);
+
+                        choiceDtos.add(choiceDto);
+                    }
+                }
+            } else {
+                for (Choice choice : questionDocument.getChoiceList()) {
+                    ChoiceDetailDto choiceDto = new ChoiceDetailDto();
+                    choiceDto.setId(choice.getId());
+                    choiceDto.setTitle(choice.getTitle());
+                    choiceDto.setCount(choice.getCount());
+
+                    choiceDtos.add(choiceDto);
+                }
+            }
+            questionDto.setChoiceList(choiceDtos);
+
+            List<WordCloudDto> wordCloudDtos = new ArrayList<>();
+            for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
+                WordCloudDto wordCloudDto = new WordCloudDto();
+                wordCloudDto.setId(wordCloud.getId());
+                wordCloudDto.setTitle(wordCloud.getTitle());
+                wordCloudDto.setCount(wordCloud.getCount());
+
+                wordCloudDtos.add(wordCloudDto);
+            }
+            questionDto.setWordCloudDtos(wordCloudDtos);
+
+            questionDtos.add(questionDto);
+        }
+        surveyDetailDto.setQuestionList(questionDtos);
+
+        log.info(String.valueOf(surveyDetailDto));
+        return surveyDetailDto;
+
+    }
+
+    private QuestionDetailDto getQuestionDto(QuestionDocument questionDocument) {
+        QuestionDetailDto questionDto = new QuestionDetailDto();
+        questionDto.setId(questionDocument.getId());
+        questionDto.setTitle(questionDocument.getTitle());
+        questionDto.setQuestionType(questionDocument.getQuestionType());
+
+        // question type에 따라 choice 에 들어갈 내용 구분
+        // 주관식이면 choice title에 주관식 응답을 저장??
+        // 객관식 찬부식 -> 기존 방식 과 똑같이 count를 올려서 저장
+        List<ChoiceDetailDto> choiceDtos = new ArrayList<>();
+        if (questionDocument.getQuestionType() == 0) {
+            // 주관식 답변들 리스트
+            // REST API GET questionAnswersByCheckAnswerId
+            List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
+            for (QuestionAnswerDto questionAnswer : questionAnswerList) {
+                // 그 중에 주관식 답변만
+                if (questionAnswer.getQuestionType() == 0) {
+                    ChoiceDetailDto choiceDto = new ChoiceDetailDto();
+                    choiceDto.setId(questionAnswer.getId());
+                    choiceDto.setTitle(questionAnswer.getCheckAnswer());
+                    choiceDto.setCount(0);
+
+                    choiceDtos.add(choiceDto);
+                }
+            }
+        } else {
+            for (Choice choice : questionDocument.getChoiceList()) {
+                ChoiceDetailDto choiceDto = new ChoiceDetailDto();
+                choiceDto.setId(choice.getId());
+                choiceDto.setTitle(choice.getTitle());
+                choiceDto.setCount(choice.getCount());
+
+                choiceDtos.add(choiceDto);
+            }
+        }
+        questionDto.setChoiceList(choiceDtos);
+
+        List<WordCloudDto> wordCloudDtos = new ArrayList<>();
+        for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
+            WordCloudDto wordCloudDto = new WordCloudDto();
+            wordCloudDto.setId(wordCloud.getId());
+            wordCloudDto.setTitle(wordCloud.getTitle());
+            wordCloudDto.setCount(wordCloud.getCount());
+
+            wordCloudDtos.add(wordCloudDto);
+        }
+        questionDto.setWordCloudDtos(wordCloudDtos);
+        return questionDto;
+    }
+
 }

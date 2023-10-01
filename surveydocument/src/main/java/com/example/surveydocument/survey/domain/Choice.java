@@ -33,6 +33,7 @@ public class Choice {
     private boolean isDeleted = Boolean.FALSE;
 
     public void addCount() {
+        System.out.println("id = " + id);
         this.count++;
     }
 

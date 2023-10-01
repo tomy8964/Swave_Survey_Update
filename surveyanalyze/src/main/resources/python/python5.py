@@ -37,7 +37,7 @@ def analyze_for_all(survey_document_id):
         # print(resultSources)
     # print()
     # 끝
-    rdb = f'select question_id from question_document where question_type = 0 AND survey_document_id = ' + survey_document_id
+    rdb = f'select question_document_id from question_document where question_type = 0 AND survey_document_id = ' + survey_document_id
 
     sourceCursor.execute(rdb)
     resultSources = sourceCursor.fetchall()

@@ -1,6 +1,7 @@
 package com.example.surveyanswer.survey.controller;
 
 import com.example.surveyanswer.survey.domain.QuestionAnswer;
+import com.example.surveyanswer.survey.response.QuestionAnswerDto;
 import com.example.surveyanswer.survey.response.SurveyDetailDto;
 import com.example.surveyanswer.survey.response.SurveyResponseDto;
 import com.example.surveyanswer.survey.service.SurveyAnswerService;
@@ -28,7 +29,7 @@ public class SurveyAnswerInternalController {
     // getQuestionAnswerByCheckAnswerId
 //    @Cacheable(value = "getQuestionAnswerByCheckAnswerId", key = "#id")
     @GetMapping(value = "/getQuestionAnswerByCheckAnswerId/{id}")
-    public List<QuestionAnswer> getQuestionAnswerByCheckAnswerId(@PathVariable Long id){
+    public List<QuestionAnswerDto> getQuestionAnswerByCheckAnswerId(@PathVariable Long id){
         return surveyService.getQuestionAnswerByCheckAnswerId(id);
     }
 }

@@ -53,21 +53,21 @@ public class RestAPIService {
             log.info("응답 저장 후 -> choice count 전달");
 
             // Define the API URL
-            String apiUrl = "http://" + gateway + "/api/document/internal/count/";
+            String apiUrl = "http://" + gateway + "/api/document/internal/count/" + choiceId;
             log.info(apiUrl);
 
-            // Make a GET request to the API and retrieve the response
-            webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(apiUrl+"{id}")
-                            .build(choiceId));
-//            String post = webClient.post()
-//                    .uri(apiUrl)
-//                    .header("Authorization","NouNull")
-//                    .bodyValue(String.valueOf(choiceId))
-//                    .retrieve()
-//                    .bodyToMono(String.class)
-//                    .block();
+            // Make a POST request to the API and retrieve the response
+//            webClient.post()
+//                    .uri(uriBuilder -> uriBuilder
+//                            .path(apiUrl)
+//                            .build(choiceId));
+            String post = webClient.post()
+                    .uri(apiUrl)
+                    .header("Authorization","NouNull")
+                    .bodyValue(String.valueOf(choiceId))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
         }
         log.info("test choice count REST API 전달");
     }
@@ -79,21 +79,20 @@ public class RestAPIService {
             log.info("응답 저장 후 -> count answer 전달");
 
             // Define the API URL
-            String apiUrl = "http://" + gateway + "/api/document/internal/countAnswer/";
+            String apiUrl = "http://" + gateway + "/api/document/internal/countAnswer/" + surveyDocumentId;
             log.info(apiUrl);
 
-            // Make a GET request to the API and retrieve the response
-            webClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(apiUrl+"{id}")
-                            .build(surveyDocumentId));
-//            String post = webClient.get()
-//                    .uri(apiUrl)
-//                    .header("Authorization","NouNull")
-//                    .bodyValue(String.valueOf(surveyDocumentId))
-//                    .retrieve()
-//                    .bodyToMono(String.class)
-//                    .block();
+            // Make a post request to the API and retrieve the response
+//            webClient.post()
+//                    .uri(uriBuilder -> uriBuilder
+//                            .path(apiUrl)
+//                            .build(surveyDocumentId));
+            String post = webClient.post()
+                    .uri(apiUrl)
+                    .header("Authorization","NouNull")
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
 
         }
         log.info("test 분석 시작 REST API 전달");

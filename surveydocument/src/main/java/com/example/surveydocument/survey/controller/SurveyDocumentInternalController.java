@@ -1,6 +1,9 @@
 package com.example.surveydocument.survey.controller;
 
+import com.example.surveydocument.survey.response.ChoiceDetailDto;
+import com.example.surveydocument.survey.response.QuestionDetailDto;
 import com.example.surveydocument.survey.response.SurveyDetailDto;
+import com.example.surveydocument.survey.response.SurveyDetailDto2;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +17,14 @@ public class SurveyDocumentInternalController {
 
     private final SurveyDocumentService surveyService;
 
-    @GetMapping(value = "/survey-list/{id}")
-    public SurveyDetailDto readDetail(@PathVariable Long id) {
+    @GetMapping(value = "/getSurveyDocument/{id}")
+    public SurveyDetailDto readDetail1(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
+    }
+
+    @GetMapping(value = "/getSurveyDocument2/{id}")
+    public SurveyDetailDto2 readDetail2(@PathVariable Long id) {
+        return surveyService.readSurveyDetail2(id);
     }
 
     @PostMapping(value = "/count/{id}")
@@ -25,7 +33,7 @@ public class SurveyDocumentInternalController {
     }
 
     // Survey Document 응답자 ++
-    @GetMapping(value = "/countAnswer/{id}")
+    @PostMapping(value = "/countAnswer/{id}")
     public void countAnswer(@PathVariable Long id) throws Exception {
         surveyService.countSurveyDocument(id);
     }
@@ -46,5 +54,21 @@ public class SurveyDocumentInternalController {
 //        } finally {
 //            lock.unlock();
 //        }
-//    }
+
+    @GetMapping(value = "/getChoice/{id}")
+    public ChoiceDetailDto getChoice(@PathVariable Long id) {
+        return surveyService.getChoice(id);
+    }
+
+    @GetMapping(value = "/getQuestion/{id}")
+    public QuestionDetailDto getQuestion(@PathVariable Long id) {
+
+        return surveyService.getQuestion(id);
+    }
+
+    @GetMapping(value = "/getQuestionByChoiceId/{id}")
+    public QuestionDetailDto getQuestionByChoiceId(@PathVariable Long id) {
+        return surveyService.getQuestionByChoiceId(id);
+    }
+
 }
