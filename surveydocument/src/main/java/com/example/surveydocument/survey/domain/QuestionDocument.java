@@ -11,12 +11,13 @@ import java.util.List;
 @Getter
 @Entity
 @NoArgsConstructor
+@Builder
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE question_document SET is_deleted = true WHERE question_document_id = ?")
 public class QuestionDocument {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "question_id")
+    @Column(name = "question_document_id")
     private Long id;
     @Column(name = "question_title")
     private String title;
@@ -41,8 +42,8 @@ public class QuestionDocument {
     @Column(name = "is_deleted")
     private boolean isDeleted = Boolean.FALSE;
 
-    @Builder
-    public QuestionDocument(String title, int questionType, List<WordCloud> wordCloudList, List<Choice> choiceList, SurveyDocument surveyDocument) {
+    public QuestionDocument(Long id, String title, int questionType, List<WordCloud> wordCloudList, List<Choice> choiceList, SurveyDocument surveyDocument, boolean isDeleted) {
+        this.id = id;
         this.title = title;
         this.questionType = questionType;
         this.wordCloudList = wordCloudList;
@@ -51,5 +52,6 @@ public class QuestionDocument {
             this.surveyDocument = surveyDocument;
             surveyDocument.getQuestionDocumentList().add(this);
         }
+        this.isDeleted = isDeleted;
     }
 }

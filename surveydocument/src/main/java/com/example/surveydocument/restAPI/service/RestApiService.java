@@ -13,25 +13,27 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
-/**
- * Reference
- * https://findmypiece.tistory.com/276
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OuterRestApiSurveyDocumentService {
+public class RestApiService {
 
     @Value("${gateway.host}")
     private String gateway;
     private static String userInternalUrl = "/api/user/internal";
+
+    public WebClient webClient = WebClient.create();
+
+    public void setGateway(String baseUrl) {
+        this.gateway = baseUrl;
+        this.webClient = WebClient.create(gateway);
+    }
 
     // Current User 정보 가져오기
     public Long getCurrentUserFromUser(HttpServletRequest request) {
         String jwtHeader = request.getHeader("Authorization");
         // WebClient 가져오기
         log.info("현재 유저정보를 가져옵니다");
-        WebClient webClient = WebClient.create();
 
         // Current User URL
         String getCurrentUserUrl = "http://" + gateway + userInternalUrl + "/me";
@@ -55,7 +57,6 @@ public class OuterRestApiSurveyDocumentService {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET questionAnswer List by checkAnswerId");
-        WebClient webClient = WebClient.create();
 
         // Define the API URL
         String apiUrl = "http://"+ gateway +"/api/answer/internal/getQuestionAnswerByCheckAnswerId/"+ id;

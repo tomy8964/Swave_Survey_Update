@@ -6,6 +6,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "wordCloud")
 @Where(clause = "is_deleted = false")
@@ -27,12 +29,4 @@ public class WordCloud {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
     private QuestionDocument questionDocument;
-
-    public WordCloud(Long id, String title, int count, boolean isDeleted, QuestionDocument questionDocument) {
-        this.id = id;
-        this.title = title;
-        this.count = count;
-        this.isDeleted = isDeleted;
-        this.questionDocument = questionDocument;
-    }
 }

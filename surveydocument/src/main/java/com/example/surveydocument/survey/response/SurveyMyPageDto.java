@@ -16,6 +16,4 @@ public class SurveyMyPageDto {
     private String description;
     private Date startDate;
     private Date deadline;
-
-
 }

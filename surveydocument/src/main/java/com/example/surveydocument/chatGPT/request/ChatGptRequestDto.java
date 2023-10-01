@@ -1,14 +1,11 @@
 package com.example.surveydocument.chatGPT.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Getter
+@Data
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor

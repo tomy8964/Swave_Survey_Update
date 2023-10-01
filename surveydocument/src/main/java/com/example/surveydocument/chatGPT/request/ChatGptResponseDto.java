@@ -11,7 +11,5 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 public class ChatGptResponseDto implements Serializable {
-
     private List<ChatGptChoice> choices;
-
 }
