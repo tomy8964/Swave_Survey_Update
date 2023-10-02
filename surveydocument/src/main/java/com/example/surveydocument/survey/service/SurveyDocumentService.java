@@ -22,10 +22,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 //import static com.example.surveyAnswer.util.SurveyTypeCheck.typeCheck;
 
@@ -112,15 +109,6 @@ public class SurveyDocumentService {
         SurveyDocument save = surveyDocumentRepository.save(surveyDocument);
 
         return save.getId();
-    }
-
-    // gird method 로 SurveyDocument 조회
-    public List<SurveyDocument> readSurveyListByGrid(HttpServletRequest request, PageRequestDto pageRequest) {
-
-        // User Module 에서 현재 유저 가져오기
-        Long userCode = apiService.getCurrentUserFromUser(request);
-
-        return null;
     }
 
     // list method 로 SurveyDocument 조회
@@ -347,14 +335,29 @@ public class SurveyDocumentService {
 //    }
 
     @Transactional
-    public void updateSurvey(SurveyRequestDto requestDto, Long surveyId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyId).get();
-        surveyDocument.updateSurvey(requestDto);
+    public void updateSurvey(HttpServletRequest request,SurveyRequestDto requestDto, Long surveyId) {
+        Optional<SurveyDocument> byId = surveyDocumentRepository.findById(surveyId);
+        if (byId.isPresent()) {
+            SurveyDocument surveyDocument = byId.get();
+            Long userId = surveyDocument.getUserId();
+            Long jwtUserId = apiService.getCurrentUserFromUser(request);
+            if (Objects.equals(userId, jwtUserId)) {
+                surveyDocument.updateSurvey(requestDto);
+            }
+        }
     }
 
     @Transactional
-    public void deleteSurvey(Long id) {
-        surveyDocumentRepository.deleteById(id);
+    public void deleteSurvey(HttpServletRequest request, Long id) {
+        Optional<SurveyDocument> byId = surveyDocumentRepository.findById(id);
+        if (byId.isPresent()) {
+            SurveyDocument surveyDocument = byId.get();
+            Long userId = surveyDocument.getUserId();
+            Long jwtUserId = apiService.getCurrentUserFromUser(request);
+            if (Objects.equals(userId, jwtUserId)) {
+                surveyDocumentRepository.deleteById(id);
+            }
+        }
     }
 
     @Transactional
