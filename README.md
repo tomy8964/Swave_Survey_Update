@@ -1,4 +1,5 @@
 # SWAVE Project - WaveForm
+## 코드 개선 및 공부
 
 
 <div align="center">
