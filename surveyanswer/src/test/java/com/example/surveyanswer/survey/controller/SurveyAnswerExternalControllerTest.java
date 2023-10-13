@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,8 +68,8 @@ public class SurveyAnswerExternalControllerTest {
                 .countAnswer(100)
                 .design(new DesignResponseDto("font", 10, "backgroundColor"))
                 .enable(true)
-                .startDate(LocalDateTime.now())
-                .endDate(LocalDateTime.now())
+                .startDate(new Date())
+                .endDate(new Date())
                 .build();
 
         List<QuestionDetailDto> questionDetailDtoList = new ArrayList<>();

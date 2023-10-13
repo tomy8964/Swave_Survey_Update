@@ -9,7 +9,7 @@ pipeline {
                         color: '#FFFF00',
                         message: "STARTED: Job ${env.JOB_NAME}"
                 )
-                git branch: 'master', credentialsId: 'git-kjk7212', url: 'https://github.com/KEA-SWAVE-SURVEY/spring-gateway/'
+                git branch: 'master', credentialsId: 'git-hamgeonwook', url: 'https://github.com/KEA-SWAVE-SURVEY/spring-gateway/'
             }
         }
         
@@ -19,8 +19,8 @@ pipeline {
                     sh "chmod +x gradlew"
                     sh "./gradlew clean bootJar"
                     script{
-                        image = docker.build("kjk7212/user-back")
-                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/kjk7212/user-back/', 'docker-hub-credentials') {
+                        image = docker.build("hamgeonwook/user-back")
+                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/hamgeonwook/user-back/', 'docker-hub-credentials') {
                             image.push("${env.BUILD_NUMBER}")
                         }
                     }
@@ -50,8 +50,8 @@ pipeline {
                     sh "chmod +x gradlew"
                     sh "./gradlew clean bootJar"
                     script{
-                        image = docker.build("kjk7212/survey-back")
-                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/kjk7212/survey-back/', 'docker-hub-credentials') {
+                        image = docker.build("hamgeonwook/survey-back")
+                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/hamgeonwook/survey-back/', 'docker-hub-credentials') {
                             image.push("${env.BUILD_NUMBER}")
                         }
                     }
@@ -81,8 +81,8 @@ pipeline {
                     sh "chmod +x gradlew"
                     sh "./gradlew clean bootJar"
                     script{
-                        image = docker.build("kjk7212/response-back")
-                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/kjk7212/response-back/', 'docker-hub-credentials') {
+                        image = docker.build("hamgeonwook/response-back")
+                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/hamgeonwook/response-back/', 'docker-hub-credentials') {
                             image.push("${env.BUILD_NUMBER}")
                         }
                     }
@@ -112,8 +112,8 @@ pipeline {
                     sh "chmod +x gradlew"
                     sh "./gradlew clean bootJar"
                     script{
-                        image = docker.build("kjk7212/analysis-back")
-                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/kjk7212/analysis-back/', 'docker-hub-credentials') {
+                        image = docker.build("hamgeonwook/analysis-back")
+                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/hamgeonwook/analysis-back/', 'docker-hub-credentials') {
                             image.push("${env.BUILD_NUMBER}")
                         }
                     }
@@ -139,7 +139,7 @@ pipeline {
 
         stage('AgroCD Manifest Update') {
             steps {
-                git credentialsId: 'git-kjk7212',
+                git credentialsId: 'git-hamgeonwook',
                         url: 'https://github.com/KEA-SWAVE-SURVEY/argocd-back',
                         branch: 'main'
                 dir('apps') {

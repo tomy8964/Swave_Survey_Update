@@ -6,6 +6,7 @@ import com.example.surveydocument.survey.response.SurveyDetailDto;
 import com.example.surveydocument.survey.response.SurveyDetailDto2;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -17,6 +18,7 @@ public class SurveyDocumentInternalController {
 
     private final SurveyDocumentService surveyService;
 
+    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getSurveyDocument/{id}")
     public SurveyDetailDto readDetail1(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
@@ -55,17 +57,20 @@ public class SurveyDocumentInternalController {
 //            lock.unlock();
 //        }
 
+    @Cacheable(value = "choice", key = "'choice-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getChoice/{id}")
     public ChoiceDetailDto getChoice(@PathVariable Long id) {
         return surveyService.getChoice(id);
     }
 
+    @Cacheable(value = "question", key = "'question-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getQuestion/{id}")
     public QuestionDetailDto getQuestion(@PathVariable Long id) {
 
         return surveyService.getQuestion(id);
     }
 
+    @Cacheable(value = "getQuestionByChoiceId", key = "'choiceByquestion-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getQuestionByChoiceId/{id}")
     public QuestionDetailDto getQuestionByChoiceId(@PathVariable Long id) {
         return surveyService.getQuestionByChoiceId(id);

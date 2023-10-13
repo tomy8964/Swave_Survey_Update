@@ -12,10 +12,7 @@ import com.example.surveydocument.survey.repository.questionDocument.QuestionDoc
 import com.example.surveydocument.survey.repository.surveyDocument.SurveyDocumentRepository;
 import com.example.surveydocument.survey.repository.wordCloud.WordCloudRepository;
 import com.example.surveydocument.survey.request.*;
-import com.example.surveydocument.survey.response.ManagementResponseDto;
-import com.example.surveydocument.survey.response.QuestionAnswerDto;
-import com.example.surveydocument.survey.response.SurveyDetailDto;
-import com.example.surveydocument.survey.response.SurveyPageDto;
+import com.example.surveydocument.survey.response.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.Dispatcher;
@@ -233,7 +230,7 @@ public class ServiceTest {
         Long savedDocumentId = surveyDocumentService.createTest(1L, surveyRequest);
 
         // when
-        surveyDocumentService.updateSurvey(surveyRequest, savedDocumentId);
+        surveyDocumentService.updateSurvey(null, surveyRequest, savedDocumentId);
 
         // then
         SurveyDocument updatedSurvey = surveyDocumentRepository.findById(savedDocumentId).get();
@@ -250,7 +247,7 @@ public class ServiceTest {
         Long savedDocumentId = surveyDocumentService.createTest(1L, surveyRequest);
 
         // when
-        surveyDocumentService.deleteSurvey(savedDocumentId);
+        surveyDocumentService.deleteSurvey(null ,savedDocumentId);
 
         // then
         List<SurveyDocument> all = surveyDocumentRepository.findAll();
@@ -320,7 +317,7 @@ public class ServiceTest {
         request.addHeader("Authorization", "Bearer yourJwtTokenHere");
         SurveyRequestDto surveyRequest = createSurveyRequestDto();
         Long surveyId = surveyDocumentService.createSurvey(request, surveyRequest);
-        Choice choice = surveyDocumentService.getChoice(surveyDocumentRepository.findById(surveyId).get().getQuestionDocumentList().get(0).getChoiceList().get(0).getId());
+        ChoiceDetailDto choice = surveyDocumentService.getChoice(surveyDocumentRepository.findById(surveyId).get().getQuestionDocumentList().get(0).getChoiceList().get(0).getId());
         surveyDocumentService.getQuestionByChoiceId(3L);
         surveyDocumentService.getQuestion(1L);
         surveyDocumentService.getSurveyDocument(surveyId);

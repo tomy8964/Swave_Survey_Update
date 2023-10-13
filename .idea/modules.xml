@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/apigateway-service-master/RootProject.apigateway-service-master.main.iml" filepath="$PROJECT_DIR$/.idea/modules/apigateway-service-master/RootProject.apigateway-service-master.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surveyanalyze/RootProject.surveyanalyze.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surveyanalyze/RootProject.surveyanalyze.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/surveyanswer/RootProject.surveyanswer.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surveyanswer/RootProject.surveyanswer.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/surveydocument/RootProject.surveydocument.main.iml" filepath="$PROJECT_DIR$/.idea/modules/surveydocument/RootProject.surveydocument.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/user/RootProject.user.main.iml" filepath="$PROJECT_DIR$/.idea/modules/user/RootProject.user.main.iml" />
     </modules>
   </component>

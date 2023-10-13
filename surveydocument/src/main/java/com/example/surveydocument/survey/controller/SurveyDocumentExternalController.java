@@ -10,6 +10,8 @@ import com.example.surveydocument.survey.response.SurveyPageDto;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,18 +35,21 @@ public class SurveyDocumentExternalController {
         return surveyService.readSurveyList(request, pageRequest);
     }
 
+    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/survey-list/{id}")
     public SurveyDetailDto readDetail(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
     }
 
     // 설문 수정
+    @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     @PutMapping("/update/{id}")
     public void updateSurvey(HttpServletRequest request, @RequestBody SurveyRequestDto requestDto, @PathVariable Long id) {
         surveyService.updateSurvey(request, requestDto, id);
     }
 
     // 설문 삭제
+    @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     @PatchMapping("/delete/{id}")
     public String deleteSurvey(HttpServletRequest request, @PathVariable Long id) {
         surveyService.deleteSurvey(request, id);
