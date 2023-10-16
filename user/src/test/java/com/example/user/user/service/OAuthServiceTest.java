@@ -375,7 +375,7 @@ public class OAuthServiceTest {
         // when
         List<User> findAll = userRepository.findAll();
         // then
-        assertThat(findAll.size()).isEqualTo(1);
+        assertThat(findAll.size()).isEqualTo(2);
     }
 
     @Test

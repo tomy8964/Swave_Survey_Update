@@ -5,6 +5,8 @@ import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,16 +30,19 @@ public class UserExternalController {
     }
 
     @GetMapping("/me")
+    @Cacheable(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
     public User getCurrentUser(HttpServletRequest request) {
         return userService.getCurrentUser(request);
     }
 
     @PatchMapping("/updatepage")
+    @CacheEvict(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
     public String updateMyPage(HttpServletRequest request, @RequestBody UserUpdateRequest user) {
         return userService.updateMyPage(request, user);
     }
 
     @PatchMapping("/deleteuser")
+    @CacheEvict(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
     public String deleteUser(HttpServletRequest request) {
         return userService.deleteUser(request);
     }

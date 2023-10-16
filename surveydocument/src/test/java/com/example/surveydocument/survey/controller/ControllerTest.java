@@ -25,6 +25,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -172,8 +173,8 @@ public class ControllerTest {
                             .setBody(answerList)
                             .addHeader("Content-Type", "application/json");
                 }
-//                else if (path.startsWith("/api/document/internal/getSurveyDocument/2")) {
-//                    System.out.println("getSurveyDocument");
+//                else if (path.startsWith("/api/document/internal/getSurveyDocumentToAnswer/2")) {
+//                    System.out.println("getSurveyDocumentToAnswer");
 //                    response.setResponseCode(200)
 //                            .setBody(surveyReliability)
 //                            .addHeader("Content-Type", "application/json");
@@ -264,14 +265,29 @@ public class ControllerTest {
         System.out.println("mvcResult = " + mvcResult2);
 
 
-
         MvcResult mvcResult8 = mockMvc.perform(MockMvcRequestBuilders.patch("/api/document/external/delete/1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult8);
+
+
+        PageRequestDto pageRequestDto = PageRequestDto.builder()
+                .method("list")
+                .page(2)
+                .sort1("title")
+                .sort2("ascending")
+                .build();
+        String pageRequest = mapper.writeValueAsString(pageRequestDto);
+
+        MvcResult mvcResult9 = mockMvc.perform(MockMvcRequestBuilders.post("/api/document/external/survey-list")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(pageRequest))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult9);
     }
 
     @Test
     @Transactional
+    @CacheEvict(allEntries = true, value = {"survey", "survey2", "choice", "question", "getQuestionByChoiceId"})
     public void internal() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String surveyRequest = mapper.writeValueAsString(createSurveyRequestDto());
@@ -279,18 +295,39 @@ public class ControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(surveyRequest))
                 .andReturn();
-        System.out.println("mvcResult.getResponse() = " + mvcResult.getResponse().getContentAsString());
-        MvcResult mvcResult1 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/survey-list/2"))
-                .andReturn();
-        System.out.println("mvcResult = " + mvcResult1);
+        System.out.println("mvcResult = " + mvcResult);
 
         MvcResult mvcResult3 = mockMvc.perform(MockMvcRequestBuilders.post("/api/document/internal/count/1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult3);
 
-        MvcResult mvcResult4 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/countAnswer/2"))
+        MvcResult mvcResult4 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/countAnswer/1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult4);
+
+        MvcResult mvcResult5 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/getSurveyDocumentToAnswer/2"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult5);
+
+        MvcResult mvcResult6 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/getSurveyDocumentToAnalyze/2"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult6);
+
+        MvcResult mvcResult7 = mockMvc.perform(MockMvcRequestBuilders.post("/api/document/internal/countAnswer/2"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult7);
+
+        MvcResult mvcResult8 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/getChoice/3"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult8);
+
+        MvcResult mvcResult9 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/getQuestion/3"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult9);
+
+        MvcResult mvcResult10 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/internal/getQuestionByChoiceId/3"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult10);
     }
 
 

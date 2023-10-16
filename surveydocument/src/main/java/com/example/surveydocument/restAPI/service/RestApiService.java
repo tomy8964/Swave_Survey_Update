@@ -32,6 +32,7 @@ public class RestApiService {
     // Current User 정보 가져오기
     public Long getCurrentUserFromUser(HttpServletRequest request) {
         String jwtHeader = request.getHeader("Authorization");
+//        if (jwtHeader==null) throw new RuntimeException("Authorization is null!!");
         // WebClient 가져오기
         log.info("현재 유저정보를 가져옵니다");
 

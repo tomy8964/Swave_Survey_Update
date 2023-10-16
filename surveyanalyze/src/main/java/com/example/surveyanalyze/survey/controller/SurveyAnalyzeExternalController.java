@@ -4,6 +4,7 @@ import com.example.surveyanalyze.survey.response.SurveyAnalyzeDto;
 import com.example.surveyanalyze.survey.response.SurveyDetailDto;
 import com.example.surveyanalyze.survey.service.SurveyAnalyzeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,16 +16,15 @@ public class SurveyAnalyzeExternalController {
     private final SurveyAnalyzeService surveyService;
 
     // 분석 문항 & 응답
-//    @Cacheable(value = "/research/survey/load/{id}", key = "#id")
     @GetMapping(value = "/research/survey/load/{id}")
     public SurveyDetailDto readSurvey(@PathVariable Long id) {
         return surveyService.getSurveyDetailDto(id);
     }
 
     // 설문 상세 분석 조회
-//    @Cacheable(value = "/research/analyze/{id}", key = "#id")
-    @GetMapping(value = "/research/analyze/{id}")
-    public SurveyAnalyzeDto readDetailAnalyze(@PathVariable Long id) {
-        return surveyService.readSurveyDetailAnalyze(id);
+    @GetMapping(value = "/research/analyze/{surveydocumentId}")
+    @Cacheable(value = "surveyAnalyze", key = "'surveyAnalyze-' + #surveydocumentId", cacheManager = "cacheManager" )
+    public SurveyAnalyzeDto readDetailAnalyze(@PathVariable Long surveydocumentId) {
+        return surveyService.readSurveyDetailAnalyze(surveydocumentId);
     }
 }

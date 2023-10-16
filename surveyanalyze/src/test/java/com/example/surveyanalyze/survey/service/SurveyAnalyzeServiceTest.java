@@ -190,7 +190,7 @@ public class SurveyAnalyzeServiceTest {
                     response.setResponseCode(200)
                             .setBody(choice)
                             .addHeader("Content-Type", "application/json");
-                } else if (path.startsWith("/api/document/internal/getSurveyDocument/")) {
+                } else if (path.startsWith("/api/document/internal/getSurveyDocumentToAnalyze/")) {
                     response.setResponseCode(200)
                             .setBody(survey)
                             .addHeader("Content-Type", "application/json");
@@ -283,24 +283,24 @@ public class SurveyAnalyzeServiceTest {
 
     @Test
     public void analyze() {
-        assertThrows(InvalidPythonException.class, () -> surveyAnalyzeService.analyze("1"));
+        assertThrows(InvalidPythonException.class, () -> surveyAnalyzeService.analyze("-1"));
     }
 
 
     @Test
     void analyzeTest() {
-        surveyAnalyzeService.analyze("-1");
+        surveyAnalyzeService.analyze("1");
         em.flush();
         em.clear();
         System.out.println("second analyze start");
-        surveyAnalyzeService.analyze("-1");
+        surveyAnalyzeService.analyze("1");
     }
 
     @Test
     @DisplayName("Read AnalyzeDto")
     void readSurveyDetailAnalyze() {
-        surveyAnalyzeService.analyze("-1");
-        surveyAnalyzeService.readSurveyDetailAnalyze(-1L);
+        surveyAnalyzeService.analyze("1");
+        surveyAnalyzeService.readSurveyDetailAnalyze(1L);
     }
 
     @Test

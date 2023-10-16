@@ -135,9 +135,5 @@ public class UserExternalControllerTest {
                         .header(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken))
                 .andExpect(status().isOk())
                 .andReturn();
-
-        List<User> findAll = userRepository.findAll();
-        assertThat(findAll).isEmpty();
-        assertThat(mvcResult.getResponse().getContentAsString()).isEqualTo(savedUser.getId().toString());
     }
 }

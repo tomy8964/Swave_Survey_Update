@@ -137,10 +137,6 @@ public class SurveyAnswerService {
         restAPIService.startAnalyze(surveyDocumentId);
     }
 
-    public List<QuestionAnswer> getQuestionAnswers(Long questionDocumentId) {
-        return questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDocumentId);
-    }
-
     public List<QuestionAnswerDto> getQuestionAnswerByCheckAnswerId(Long id) {
         List<QuestionAnswer> questionAnswers = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(id);
         List<QuestionAnswerDto> questionAnswerDtoList = new ArrayList<>();

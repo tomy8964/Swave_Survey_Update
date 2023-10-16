@@ -7,7 +7,9 @@ import com.example.surveyanswer.survey.service.SurveyAnswerService;
 import lombok.RequiredArgsConstructor;
 import org.redisson.RedissonRedLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +25,6 @@ public class SurveyAnswerExternalController {
     private final RedissonClient redissonClient;
 
     // 설문 참여
-//    @Cacheable(value = "load-survey", key = "#id")
     @GetMapping(value = "/load/{id}")
     public SurveyDetailDto participateSurvey(@PathVariable Long id) {
         return surveyService.getParticipantSurvey(id);
@@ -31,6 +32,10 @@ public class SurveyAnswerExternalController {
 
     // 설문 응답 저장
     @PostMapping(value = "/response/create")
+    @Caching(evict = {
+            @CacheEvict(value = "responseList", key = "'responseList-' + #surveyForm.id", cacheManager = "cacheManager" ),
+            @CacheEvict(value = "getQuestionAnswerByCheckAnswerId", allEntries = true, cacheManager = "cacheManager" )
+    })
     public void createResponse(@RequestBody SurveyResponseDto surveyForm) {
         surveyService.createSurveyAnswer(surveyForm);
 //
@@ -51,8 +56,8 @@ public class SurveyAnswerExternalController {
     }
 
     // 설문 응답들 조회
-//    @Cacheable(value = "get-csv", key = "#id")
     @GetMapping(value = "/response/{id}")
+    @Cacheable(value = "responseList", key = "'responseList-' + #id", cacheManager = "cacheManager" )
     public List<SurveyAnswer> readResponse(@PathVariable Long id){
         return surveyService.getSurveyAnswersBySurveyDocumentId(id);
     }

@@ -18,13 +18,14 @@ public class SurveyDocumentInternalController {
 
     private final SurveyDocumentService surveyService;
 
-    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
-    @GetMapping(value = "/getSurveyDocument/{id}")
+    @GetMapping(value = "/getSurveyDocumentToAnswer/{id}")
+    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     public SurveyDetailDto readDetail1(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
     }
 
-    @GetMapping(value = "/getSurveyDocument2/{id}")
+    @GetMapping(value = "/getSurveyDocumentToAnalyze/{id}")
+    @Cacheable(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
     public SurveyDetailDto2 readDetail2(@PathVariable Long id) {
         return surveyService.readSurveyDetail2(id);
     }
@@ -57,21 +58,21 @@ public class SurveyDocumentInternalController {
 //            lock.unlock();
 //        }
 
-    @Cacheable(value = "choice", key = "'choice-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getChoice/{id}")
+    @Cacheable(value = "choice", key = "'choice-' + #id", cacheManager = "cacheManager")
     public ChoiceDetailDto getChoice(@PathVariable Long id) {
         return surveyService.getChoice(id);
     }
 
-    @Cacheable(value = "question", key = "'question-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getQuestion/{id}")
+    @Cacheable(value = "question", key = "'question-' + #id", cacheManager = "cacheManager")
     public QuestionDetailDto getQuestion(@PathVariable Long id) {
 
         return surveyService.getQuestion(id);
     }
 
-    @Cacheable(value = "getQuestionByChoiceId", key = "'choiceByquestion-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/getQuestionByChoiceId/{id}")
+    @Cacheable(value = "getQuestionByChoiceId", key = "'choiceByquestion-' + #id", cacheManager = "cacheManager")
     public QuestionDetailDto getQuestionByChoiceId(@PathVariable Long id) {
         return surveyService.getQuestionByChoiceId(id);
     }

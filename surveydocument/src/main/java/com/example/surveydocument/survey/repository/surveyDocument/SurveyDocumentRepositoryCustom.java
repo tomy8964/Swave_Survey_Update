@@ -6,5 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface SurveyDocumentRepositoryCustom {
 
+
+
     Page<SurveyPageDto> pagingSurvey(Long userId, String sortWhat, String sortHow, Pageable pageable);
 }

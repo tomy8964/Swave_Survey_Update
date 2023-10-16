@@ -158,13 +158,13 @@ public class SurveyAnswerExternalControllerTest {
                 if (path.startsWith("/api/document/internal/count/")) {
                     response.setResponseCode(200)
                             .setBody("endpoint count 확인");
-                } else if (path.startsWith("/api/document/internal/getSurveyDocument/1")) {
-                    System.out.println("getSurveyDocument");
+                } else if (path.startsWith("/api/document/internal/getSurveyDocumentToAnswer/1")) {
+                    System.out.println("getSurveyDocumentToAnswer");
                     response.setResponseCode(200)
                             .setBody(survey1)
                             .addHeader("Content-Type", "application/json");
-                } else if (path.startsWith("/api/document/internal/getSurveyDocument/2")) {
-                    System.out.println("getSurveyDocument");
+                } else if (path.startsWith("/api/document/internal/getSurveyDocumentToAnswer/2")) {
+                    System.out.println("getSurveyDocumentToAnswer");
                     response.setResponseCode(200)
                             .setBody(surveyReliability)
                             .addHeader("Content-Type", "application/json");
@@ -246,5 +246,9 @@ public class SurveyAnswerExternalControllerTest {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.get("/api/answer/external/response/1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult);
+
+        MvcResult mvcResult2 = mockMvc.perform(MockMvcRequestBuilders.get("/api/answer/internal/getQuestionAnswerByCheckAnswerId/1"))
+                .andReturn();
+        System.out.println("mvcResult = " + mvcResult2);
     }
 }

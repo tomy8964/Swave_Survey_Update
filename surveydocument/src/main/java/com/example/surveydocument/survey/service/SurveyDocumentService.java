@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -335,6 +337,11 @@ public class SurveyDocumentService {
 //    }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey", key = "'survey-' + #surveyId", cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey2", key = "'survey2-' + #surveyId", cacheManager = "cacheManager")
+    })
     public void updateSurvey(HttpServletRequest request,SurveyRequestDto requestDto, Long surveyId) {
         Optional<SurveyDocument> byId = surveyDocumentRepository.findById(surveyId);
         if (byId.isPresent()) {
@@ -348,6 +355,11 @@ public class SurveyDocumentService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
+    })
     public void deleteSurvey(HttpServletRequest request, Long id) {
         Optional<SurveyDocument> byId = surveyDocumentRepository.findById(id);
         if (byId.isPresent()) {

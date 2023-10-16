@@ -173,7 +173,7 @@ public class SurveyAnalyzeExternalControllerTest {
                     response.setResponseCode(200)
                             .setBody(choice)
                             .addHeader("Content-Type", "application/json");
-                } else if (path.startsWith("/api/document/internal/getSurveyDocument/")) {
+                } else if (path.startsWith("/api/document/internal/getSurveyDocumentToAnalyze/")) {
                     response.setResponseCode(200)
                             .setBody(survey)
                             .addHeader("Content-Type", "application/json");
@@ -273,7 +273,7 @@ public class SurveyAnalyzeExternalControllerTest {
     @Test
     void startAnalyze() throws Exception {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/api/analyze/internal/research/analyze/create")
-                        .content("-1"))
+                        .content("1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult);
     }

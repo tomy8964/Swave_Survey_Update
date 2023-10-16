@@ -18,7 +18,7 @@ public class UserNotFoundExceptionTest {
     @Test
     @DisplayName("회원 정보가 없습니다 테스트")
     public void UserNotFoundTest() {
-        assertThrows(UserNotFoundException.class, () -> userRepository.findById(1L).orElseThrow(UserNotFoundException::new));
+        assertThrows(UserNotFoundException.class, () -> userRepository.findById(100L).orElseThrow(UserNotFoundException::new));
     }
 
 }

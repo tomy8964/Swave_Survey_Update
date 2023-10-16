@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,27 +30,25 @@ public class SurveyDocumentExternalController {
         return surveyService.createSurvey(request, surveyForm);
     }
 
-    // list 로 조회
     @PostMapping(value = "/survey-list")
+    @Cacheable(value = "surveyPage", key = "'surveyPage-' + #pageRequest", cacheManager = "cacheManager" )
     public Page<SurveyPageDto> readList(HttpServletRequest request, @RequestBody PageRequestDto pageRequest) {
         return surveyService.readSurveyList(request, pageRequest);
     }
 
-    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
     @GetMapping(value = "/survey-list/{id}")
+    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
     public SurveyDetailDto readDetail(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
     }
 
     // 설문 수정
-    @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     @PutMapping("/update/{id}")
     public void updateSurvey(HttpServletRequest request, @RequestBody SurveyRequestDto requestDto, @PathVariable Long id) {
         surveyService.updateSurvey(request, requestDto, id);
     }
 
     // 설문 삭제
-    @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     @PatchMapping("/delete/{id}")
     public String deleteSurvey(HttpServletRequest request, @PathVariable Long id) {
         surveyService.deleteSurvey(request, id);
