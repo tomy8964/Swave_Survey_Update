@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -150,8 +151,9 @@ public class SurveyAnswerService {
         return questionAnswerDtoList;
     }
 
-    public List<SurveyAnswer> getSurveyAnswersBySurveyDocumentId(Long id) {
-        return surveyAnswerRepository.findSurveyAnswersBySurveyDocumentId(id);
+    public List<SurveyAnswerDto> getSurveyAnswersBySurveyDocumentId(Long id) {
+        List<SurveyAnswer> surveyAnswerList = surveyAnswerRepository.findSurveyAnswerListBySurveyDocumentId(id);
+        return surveyAnswerList.stream().map(SurveyAnswerDto::new).collect(Collectors.toList());
     }
 
     // 진정성 검사 추가 검증

@@ -1,6 +1,5 @@
 package com.example.surveyanswer.survey.controller;
 
-import com.example.surveyanswer.survey.domain.QuestionAnswer;
 import com.example.surveyanswer.survey.response.QuestionAnswerDto;
 import com.example.surveyanswer.survey.service.SurveyAnswerService;
 import lombok.RequiredArgsConstructor;

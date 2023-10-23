@@ -1,6 +1,7 @@
 package com.example.surveyanswer.survey.controller;
 
 import com.example.surveyanswer.survey.domain.SurveyAnswer;
+import com.example.surveyanswer.survey.response.SurveyAnswerDto;
 import com.example.surveyanswer.survey.response.SurveyDetailDto;
 import com.example.surveyanswer.survey.response.SurveyResponseDto;
 import com.example.surveyanswer.survey.service.SurveyAnswerService;
@@ -58,7 +59,7 @@ public class SurveyAnswerExternalController {
     // 설문 응답들 조회
     @GetMapping(value = "/response/{id}")
     @Cacheable(value = "responseList", key = "'responseList-' + #id", cacheManager = "cacheManager" )
-    public List<SurveyAnswer> readResponse(@PathVariable Long id){
+    public List<SurveyAnswerDto> readResponse(@PathVariable Long id){
         return surveyService.getSurveyAnswersBySurveyDocumentId(id);
     }
 

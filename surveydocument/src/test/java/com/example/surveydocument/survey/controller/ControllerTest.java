@@ -223,7 +223,6 @@ public class ControllerTest {
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult);
 
-
         MvcResult mvcResult3 = mockMvc.perform(MockMvcRequestBuilders.get("/api/document/external/survey-list/1"))
                 .andReturn();
         System.out.println("mvcResult = " + mvcResult3);

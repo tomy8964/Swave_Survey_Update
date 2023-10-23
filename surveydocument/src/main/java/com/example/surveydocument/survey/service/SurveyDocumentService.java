@@ -21,17 +21,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-//import static com.example.surveyAnswer.util.SurveyTypeCheck.typeCheck;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
-@EnableTransactionManagement
+@Transactional(readOnly = true)
 public class SurveyDocumentService {
     private final SurveyDocumentRepository surveyDocumentRepository;
     private final DesignRepository designRepository;
@@ -225,7 +222,7 @@ public class SurveyDocumentService {
 
     // SurveyDocument Response 보낼 SurveyDetailDto로 변환하는 메서드
     private SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).get();
+        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId);
         SurveyDetailDto surveyDetailDto = new SurveyDetailDto();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
@@ -342,8 +339,8 @@ public class SurveyDocumentService {
             @CacheEvict(value = "survey", key = "'survey-' + #surveyId", cacheManager = "cacheManager"),
             @CacheEvict(value = "survey2", key = "'survey2-' + #surveyId", cacheManager = "cacheManager")
     })
-    public void updateSurvey(HttpServletRequest request,SurveyRequestDto requestDto, Long surveyId) {
-        Optional<SurveyDocument> byId = surveyDocumentRepository.findById(surveyId);
+    public void updateSurvey(HttpServletRequest request, SurveyRequestDto requestDto, Long surveyId) {
+        Optional<SurveyDocument> byId = surveyDocumentRepository.findByIdToUpdate(surveyId);
         if (byId.isPresent()) {
             SurveyDocument surveyDocument = byId.get();
             Long userId = surveyDocument.getUserId();
@@ -383,34 +380,22 @@ public class SurveyDocumentService {
 
     @Transactional
     public void managementEnable(Long id, Boolean enable) {
-        Optional<SurveyDocument> surveyDocument = surveyDocumentRepository.findById(id);
-        surveyDocument.ifPresent(document -> document.getDate().setIsEnabled(enable));
+        surveyDocumentRepository.updateManage(id, enable);
     }
 
-    @Transactional
     public ManagementResponseDto managementSurvey(Long id) {
-        return surveyDocumentRepository.findById(id).map(document -> ManagementResponseDto.builder()
-                .startDate(document.getDate().getStartDate())
-                .endDate(document.getDate().getDeadline())
-                .enable(document.getDate().getIsEnabled())
-                .build()).orElse(null);
+        return surveyDocumentRepository.findManageById(id);
     }
 
 
     public SurveyDetailDto2 readSurveyDetail2(Long surveyDocumentId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).get();
+        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId);
         SurveyDetailDto2 surveyDetailDto = new SurveyDetailDto2();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
         surveyDetailDto.setId(surveyDocument.getId());
         surveyDetailDto.setTitle(surveyDocument.getTitle());
         surveyDetailDto.setDescription(surveyDocument.getDescription());
-
-        // 디자인
-        DesignResponseDto designResponse = new DesignResponseDto();
-        designResponse.setFont(surveyDocument.getDesign().getFont());
-        designResponse.setFontSize(surveyDocument.getDesign().getFontSize());
-        designResponse.setBackColor(surveyDocument.getDesign().getBackColor());
 
         List<QuestionDetailDto> questionDtos = new ArrayList<>();
         for (QuestionDocument questionDocument : surveyDocument.getQuestionDocumentList()) {
