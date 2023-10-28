@@ -2,7 +2,6 @@ package com.example.user.user.service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.example.user.restAPI.service.OuterRestApiUserService;
 import com.example.user.user.domain.User;
 import com.example.user.user.domain.UserRole;
 import com.example.user.user.exception.UserNotFoundException;
@@ -35,12 +34,10 @@ import java.util.*;
 public class OAuthService {
 
     private final UserRepository userRepository;
-    private final OuterRestApiUserService apiUserService;
     private RestTemplate rt = new RestTemplate();
 
-    public OAuthService(UserRepository userRepository, OuterRestApiUserService apiUserService) {
+    public OAuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.apiUserService = apiUserService;
     }
 
     public void setRestTemplate(RestTemplate rt) {
@@ -122,8 +119,6 @@ public class OAuthService {
         }
 
         User savedUser = userRepository.save(Objects.requireNonNull(user));
-        // Document 에 알리기
-        apiUserService.sendUserToSurveyDocument(savedUser.getId());
         //기존 회원이면 저장 건너뛰고 토큰 생성
         return savedUser.getId();
     }

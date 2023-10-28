@@ -6,9 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-
+@Transactional(readOnly = true)
 public interface SurveyAnalyzeRepository extends JpaRepository<SurveyAnalyze, Long>, SurveyAnalyzeRepositoryCustom {
-    @Transactional(readOnly = true)
     Optional<SurveyAnalyze> findBySurveyDocumentId(Long surveyDocumentId);
 
     @Transactional

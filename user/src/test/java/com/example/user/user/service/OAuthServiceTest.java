@@ -1,12 +1,9 @@
 package com.example.user.user.service;
 
-import com.example.user.restAPI.service.OuterRestApiUserService;
 import com.example.user.user.domain.User;
 import com.example.user.user.domain.UserRole;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.util.oAuth.OauthToken;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
