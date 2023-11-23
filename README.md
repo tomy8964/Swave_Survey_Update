@@ -1,5 +1,6 @@
 # SWAVE Project - WaveForm
 ## 코드 개선 및 공부
+## [개선 작업기] (https://tomy8964.notion.site/Swave-WaveForm-59f2b958343d49818afe3e94365ca918?pvs=4)
 
 
 <div align="center">
