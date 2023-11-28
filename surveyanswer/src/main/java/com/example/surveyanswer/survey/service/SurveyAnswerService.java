@@ -61,31 +61,6 @@ public class SurveyAnswerService {
         return reliabilityQuestionList;
     }
 
-    private static ReliabilityQuestion getReliabilityQuestion() {
-
-        int randomReliabilityQuestionNumber = new Random().nextInt(RELIABILITY_QUESTION_SIZE);
-
-        return reliabilityQuestionList.get(randomReliabilityQuestionNumber);
-    }
-
-    private static QuestionResponseDto checkValidResponseByReliabilityTest(@NotNull SurveyResponseDto surveyResponse) {
-        QuestionResponseDto reliabilityQuestion = null;
-        for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
-            if (questionResponseDto.getAnswerId() == -1L) {
-                for (ReliabilityQuestion question : reliabilityQuestionList) {
-                    if (questionResponseDto.getTitle().equals(question.getTitle())) {
-                        if (questionResponseDto.getAnswer().equals(question.getCorrectAnswer())) {
-                            reliabilityQuestion = questionResponseDto;
-                        } else {
-                            throw new InvalidReliabilityException();
-                        }
-                    }
-                }
-            }
-        }
-        return reliabilityQuestion;
-    }
-
     // 설문 응답 참여
     public SurveyDetailDto getParticipantSurvey(Long id) {
         if (restAPIService.getSurveyDetailDto(id).getReliability()) {
@@ -154,6 +129,31 @@ public class SurveyAnswerService {
     public List<SurveyAnswerDto> getSurveyAnswersBySurveyDocumentId(Long id) {
         List<SurveyAnswer> surveyAnswerList = surveyAnswerRepository.findSurveyAnswerListBySurveyDocumentId(id);
         return surveyAnswerList.stream().map(SurveyAnswerDto::new).collect(Collectors.toList());
+    }
+    
+    private static ReliabilityQuestion getReliabilityQuestion() {
+
+        int randomReliabilityQuestionNumber = new Random().nextInt(RELIABILITY_QUESTION_SIZE);
+
+        return reliabilityQuestionList.get(randomReliabilityQuestionNumber);
+    }
+
+    private static QuestionResponseDto checkValidResponseByReliabilityTest(@NotNull SurveyResponseDto surveyResponse) {
+        QuestionResponseDto reliabilityQuestion = null;
+        for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
+            if (questionResponseDto.getAnswerId() == -1L) {
+                for (ReliabilityQuestion question : reliabilityQuestionList) {
+                    if (questionResponseDto.getTitle().equals(question.getTitle())) {
+                        if (questionResponseDto.getAnswer().equals(question.getCorrectAnswer())) {
+                            reliabilityQuestion = questionResponseDto;
+                        } else {
+                            throw new InvalidReliabilityException();
+                        }
+                    }
+                }
+            }
+        }
+        return reliabilityQuestion;
     }
 
     // 진정성 검사 추가 검증
