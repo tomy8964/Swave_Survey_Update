@@ -24,16 +24,11 @@ public class RestAPIService {
 
 
     public void startAnalyze(Long surveyDocumentId) {
-        //REST API로 분석 시작 컨트롤러로 전달
-        // Create a WebClient instance
         log.info("응답 저장 후 -> 분석 시작 REST API 전달");
 
-        // Define the API URL
         String apiUrl = "http://" + gateway + "/api/analyze/internal/research/analyze/create";
-
         log.info(apiUrl);
 
-        // Make a GET request to the API and retrieve the response
         String post = webClient.post()
                 .uri(apiUrl)
                 .header("Authorization","NouNull")
@@ -42,25 +37,16 @@ public class RestAPIService {
                 .bodyToMono(String.class)
                 .block();
 
-        // Process the response as needed
         System.out.println("Request: " + post);
     }
 
     public void giveChoiceIdToCount(Long choiceId) {
         if (choiceId != null) {
-            //REST API로 분석 시작 컨트롤러로 전달
-            // Create a WebClient instance
             log.info("응답 저장 후 -> choice count 전달");
 
-            // Define the API URL
             String apiUrl = "http://" + gateway + "/api/document/internal/count/" + choiceId;
             log.info(apiUrl);
 
-            // Make a POST request to the API and retrieve the response
-//            webClient.post()
-//                    .uri(uriBuilder -> uriBuilder
-//                            .path(apiUrl)
-//                            .build(choiceId));
             String post = webClient.post()
                     .uri(apiUrl)
                     .header("Authorization","NouNull")
@@ -74,19 +60,12 @@ public class RestAPIService {
 
     public void giveDocumentIdtoCountResponse(Long surveyDocumentId) {
         if (surveyDocumentId != null) {
-            //REST API로 분석 시작 컨트롤러로 전달
-            // Create a WebClient instance
             log.info("응답 저장 후 -> count answer 전달");
 
             // Define the API URL
             String apiUrl = "http://" + gateway + "/api/document/internal/countAnswer/" + surveyDocumentId;
             log.info(apiUrl);
 
-            // Make a post request to the API and retrieve the response
-//            webClient.post()
-//                    .uri(uriBuilder -> uriBuilder
-//                            .path(apiUrl)
-//                            .build(surveyDocumentId));
             String post = webClient.post()
                     .uri(apiUrl)
                     .header("Authorization","NouNull")
@@ -99,15 +78,11 @@ public class RestAPIService {
     }
 
     public SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
-        //REST API로 분석 시작 컨트롤러로 전달
-        // Create a WebClient instance
         log.info("GET SurveyDetailDto");
 
-        // Define the API URL
         String apiUrl = "http://" + gateway + "/api/document/internal/getSurveyDocumentToAnswer/" + surveyDocumentId;
         log.info(apiUrl);
 
-        // Make a GET request to the API and retrieve the response
         SurveyDetailDto response = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization","NotNull")
