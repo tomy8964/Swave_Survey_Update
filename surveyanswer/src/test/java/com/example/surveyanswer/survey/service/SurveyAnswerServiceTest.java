@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,6 +32,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 @Slf4j
 @Transactional
@@ -175,13 +177,11 @@ public class SurveyAnswerServiceTest {
 
         // Initialize other dependencies and the service under test
         MockitoAnnotations.openMocks(this);
-//        surveyAnswerRepository = Mockito.mock(SurveyAnswerRepository.class);
-//        questionAnswerRepository = Mockito.mock(QuestionAnswerRepository.class);
-//        restAPIService = Mockito.mock(RestAPIService.class);
         surveyAnswerService = new SurveyAnswerService(surveyAnswerRepository, questionAnswerRepository, restAPIService);
 
         // Update the base URL of the service to use the mock server
-        restAPIService.setGateway(baseUrl);
+        WebClient.Builder mockWebClientBuilder = mock(WebClient.Builder.class);
+        restAPIService = restAPIService.setGateway(baseUrl, mockWebClientBuilder);
     }
 
     @AfterEach
@@ -224,7 +224,7 @@ public class SurveyAnswerServiceTest {
         surveyAnswerService.createSurveyAnswer(surveyResponseDto);
 
         //then
-        List<SurveyAnswer> surveyAnswersBySurveyDocumentId = surveyAnswerRepository.findSurveyAnswersBySurveyDocumentId(1L);
+        List<SurveyAnswer> surveyAnswersBySurveyDocumentId = surveyAnswerRepository.findSurveyAnswerListBySurveyDocumentId(1L);
         for (SurveyAnswer surveyAnswer : surveyAnswersBySurveyDocumentId) {
             assertEquals(surveyAnswer.getSurveyDocumentId(), 1L);
             assertEquals(surveyAnswer.getTitle(), "설문 제목");
@@ -278,7 +278,7 @@ public class SurveyAnswerServiceTest {
         surveyAnswerService.createSurveyAnswer(surveyResponseDto);
 
         //then
-        List<SurveyAnswer> surveyAnswersBySurveyDocumentId = surveyAnswerRepository.findSurveyAnswersBySurveyDocumentId(1L);
+        List<SurveyAnswer> surveyAnswersBySurveyDocumentId = surveyAnswerRepository.findSurveyAnswerListBySurveyDocumentId(1L);
         for (SurveyAnswer surveyAnswer : surveyAnswersBySurveyDocumentId) {
             assertEquals(surveyAnswer.getSurveyDocumentId(), 1L);
             assertEquals(surveyAnswer.getTitle(), "설문 제목");
@@ -360,7 +360,7 @@ public class SurveyAnswerServiceTest {
         assertEquals(participantDetailDto.getReliability(), true);
         assertEquals(participantDetailDto.getQuestionList().size(), 3);
     }
-    
+
 //    @Test
 //    @DisplayName("question id로 question answer 찾기")
 //    public void getQuestionAnswers() {
@@ -400,5 +400,5 @@ public class SurveyAnswerServiceTest {
 //        assertEquals(questionAnswer1.getCheckAnswer(), "Answer 1");
 //        assertEquals(questionAnswer2.getCheckAnswer(), "Answer 2");
 //    }
-    
+
 }
