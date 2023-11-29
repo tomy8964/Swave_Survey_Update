@@ -15,38 +15,19 @@ import org.springframework.web.bind.annotation.*;
 public class SurveyAnalyzeInternalController {
 
     private final SurveyAnalyzeService surveyService;
-//    private final RedissonClient redissonClient;
 
     @Autowired
-    public SurveyAnalyzeInternalController(SurveyAnalyzeService surveyService
-//            , RedissonClient redissonClient
-    ) {
-//        this.redissonClient = redissonClient;
+    public SurveyAnalyzeInternalController(SurveyAnalyzeService surveyService) {
         this.surveyService = surveyService;
     }
 
     // 설문 분석 시작
-    // 분산락 적용
     @Transactional
     @PostMapping(value = "/research/analyze/create")
     @CacheEvict(value = "surveyAnalyze", key = "'surveyAnalyze-' + #surveyId", cacheManager = "cacheManager" )
     public String saveAnalyze(@RequestBody String surveyId) {
         surveyService.analyze(surveyId);
         surveyService.wordCloudPython(surveyId);
-//        RedissonRedLock lock = new RedissonRedLock(redissonClient.getLock("/research/analyze/create"));
-//
-//        try {
-//            if (lock.tryLock()) {
-//                // transaction
-//                surveyService.analyze(surveyId);
-//                surveyService.wordCloudPython(surveyId);
-//                return "Success";
-//            } else {
-//                throw new RuntimeException("Failed to acquire lock.");
-//            }
-//        } finally {
-//            lock.unlock();
-//        }
         return "success";
     }
 }
