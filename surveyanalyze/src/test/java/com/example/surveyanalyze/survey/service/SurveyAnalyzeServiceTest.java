@@ -29,6 +29,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 @SpringBootTest
 @Transactional
@@ -272,7 +274,8 @@ public class SurveyAnalyzeServiceTest {
                 restAPIService);
 
         // Update the base URL of the service to use the mock server
-        restAPIService.setGateway(baseUrl);
+        WebClient.Builder mockWebClientBuilder = mock(WebClient.Builder.class);
+        restAPIService = restAPIService.setGateway(baseUrl, mockWebClientBuilder);
     }
 
     @AfterEach

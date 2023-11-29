@@ -18,14 +18,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-
 @Component
 @Slf4j
 public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
-    Environment env;
     private final ObjectMapper objectMapper;
+    Environment env;
 
     public AuthorizationHeaderFilter(Environment env, ObjectMapper objectMapper) {
         super(Config.class);
@@ -53,13 +50,13 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
                 }
             }
 
-            String authorizationHeader = request.getHeaders().get(AUTHORIZATION).get(0);
-            System.out.println(authorizationHeader);
+            String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            log.info(authorizationHeader);
             String jwt = authorizationHeader.replace("Bearer ", "");
-            System.out.println(jwt);
+            log.info(jwt);
 
             if (!isJwtValid(jwt)) {
-                System.out.println("error");
+                log.info("error");
                 ServerHttpResponse response = exchange.getResponse();
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
@@ -78,19 +75,21 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
     }
 
     private boolean isJwtValid(String jwt) {
-        boolean returnValue;
         try {
-            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("id").asLong();
-            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwt).getClaim("nickname").asString();
-            returnValue = true;
-        }catch (Exception e){
-            returnValue = false;
+            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET))
+                    .build()
+                    .verify(jwt)
+                    .getClaim("id").asLong();
+            JWT.require(Algorithm.HMAC512(JwtProperties.SECRET))
+                    .build()
+                    .verify(jwt)
+                    .getClaim("nickname").asString();
+            return true;
+        } catch (Exception e) {
+            return false;
         }
-
-        return returnValue;
     }
 
-    // Mono, Flux -> Spring WebFlux
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
@@ -99,7 +98,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
         return response.setComplete();
     }
 
-    public static class Config{
+    public static class Config {
 
     }
 
