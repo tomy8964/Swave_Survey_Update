@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class SurveyAnalyzeService {
     private final ChiAnalyzeRepository chiAnalyzeRepository;
     private final CompareAnalyzeRepository compareAnalyzeRepository;
@@ -131,18 +131,18 @@ public class SurveyAnalyzeService {
         if (exitCode != 0) {
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String errorLine;
-            System.out.println("Error output:");
+            log.error("Error output:");
             while (true) {
                 try {
                     if ((errorLine = errorReader.readLine()) == null) break;
                 } catch (IOException e) {
                     throw new InvalidPythonException(e);
                 }
-                System.out.println(errorLine);
+                log.error(errorLine);
             }
         }
 
-        System.out.println("Process exited with code " + exitCode);
+        log.error("Process exited with code " + exitCode);
     }
 
     private static List<Object> getListResult(String line) throws JsonProcessingException {
@@ -341,13 +341,13 @@ public class SurveyAnalyzeService {
         if (exitCode != 0) {
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String errorLine;
-            System.out.println("Error output:");
+            log.error("Error output:");
             while ((errorLine = errorReader.readLine()) != null) {
-                System.out.println(errorLine);
+                log.error(errorLine);
             }
         }
 
-        System.out.println("Process exited with code " + exitCode);
+        log.error("Process exited with code " + exitCode);
 
         // 서브 프로세스가 출력하는 내용을 받기 위해
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
