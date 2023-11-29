@@ -68,46 +68,6 @@ public class SurveyAnalyzeService {
         return surveyAnalyze.map(this::getSurveyDetailAnalyzeDto).orElse(null);
     }
 
-
-//    private static String removeStopwords(List<String> inputList, List<String> stopwords) {
-//        List<String> filteredList = new ArrayList<>();
-//
-//        for (String inputString : inputList) {
-//            // Tokenize the input string
-//            String[] words = StringUtils.tokenizeToStringArray(inputString, " ");
-//
-//            // Remove stopwords
-//            List<String> filteredWords = new ArrayList<>();
-//            for (String word : words) {
-//                // Convert word to lowercase for case-insensitive matching
-//                String lowercaseWord = word.toLowerCase();
-//
-//                // Skip stopwords
-//                if (!contains(new List[]{stopwords}, lowercaseWord)) {
-//                    filteredWords.add(word);
-//                }
-//            }
-//
-//            // Reconstruct the filtered string
-//            String filteredString = StringUtils.arrayToDelimitedString(filteredWords.toArray(), " ");
-//            filteredList.add(filteredString);
-//        }
-//
-//        return filteredList.toString().trim();
-//    }
-
-//    private static Map<String, Integer> countWords(String text) {
-//        String[] words = text.split("\\s+");
-//        Map<String, Integer> wordCount = new HashMap<>();
-//
-//        for (String word : words) {
-//            if (!word.isEmpty()) {
-//                wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
-//            }
-//        }
-//        return wordCount;
-//    }
-
     // SurveyDetailDto Response 보낼 SurveyDetailDto로 변환하는 메서드
     public SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
         SurveyDetailDto surveyDetailDto = restAPIService.getSurveyDetailDto(surveyDocumentId);
@@ -149,8 +109,6 @@ public class SurveyAnalyzeService {
         log.info(String.valueOf(resources[0]));
         String substring = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() - 1);
         log.info(substring);
-//        String resourceFolderLocation = resourceLocator.getResourceFolderLocation();
-
         builder = new ProcessBuilder("python", substring, surveyDocumentId);
 
         builder.redirectErrorStream(true);
@@ -243,55 +201,6 @@ public class SurveyAnalyzeService {
         saveApriori(apriori, surveyAnalyze);
         surveyAnalyzeRepository.flush();
     }
-
-    // 분석 응답 (문항 별 응답 수 불러오기) (Count)
-//    public SurveyDetailDto readCountChoice(HttpServletRequest request, Long surveyId) throws InvalidTokenException {
-////        checkInvalidToken(request);
-//        return getSurveyDetailDto(surveyId);
-//    }
-
-    // 분석 관리 Get
-//    public SurveyManageDto readSurveyMange(HttpServletRequest request, Long surveyId) throws InvalidTokenException {
-////        checkInvalidToken(request);
-//
-//        //Survey_Id를 가져와서 그 Survey 의 Document 를 가져옴
-//        Optional<SurveyDetailDto> findSurvey = surveyDocumentRepository.findById(surveyId);
-//
-//        if (findSurvey.isPresent()) {
-//            //manage 부분만 추출
-//            SurveyManageDto manage = new SurveyManageDto();
-//            manage.builder()
-//                    .acceptResponse(findSurvey.get().isAcceptResponse())
-//                    .startDate(findSurvey.get().getStartDate())
-//                    .deadline(findSurvey.get().getDeadline())
-//                    .url(findSurvey.get().getUrl())
-//                    .build();
-//
-//            return manage;
-//        }else {
-//            throw new InvalidSurveyException();
-//        }
-//    }
-
-    // 분석 관리 Post
-//    public void setSurveyMange(HttpServletRequest request, Long surveyId, SurveyManageDto manage) throws InvalidTokenException {
-////        checkInvalidToken(request);
-//        Optional<SurveyDetailDto> optionalSurvey = surveyDocumentRepository.findById(surveyId);
-//
-//        if (optionalSurvey.isPresent()) {
-//            SurveyDetailDto surveyDetailDto = optionalSurvey.get();
-//            // update survey properties using the manage DTO
-//            surveyDetailDto.setDeadline(manage.getDeadline());
-//            surveyDetailDto.setUrl(manage.getUrl());
-//            surveyDetailDto.setStartDate(manage.getStartDate());
-//            surveyDetailDto.setAcceptResponse(manage.isAcceptResponse());
-//
-//            surveyDocumentRepository.save(surveyDetailDto);
-//        } else {
-//            throw new InvalidSurveyException();
-//        }
-////        checkInvalidToken(request);
-//    }
 
     private void saveApriori(ArrayList<Object> apriori, SurveyAnalyze surveyAnalyze) {
         //apriori
@@ -412,10 +321,9 @@ public class SurveyAnalyzeService {
                 .getResources("classpath*:python/python4.py");
 
         log.info(String.valueOf(resources[0]));
-        //server 5 local 6
+        
         String substring = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() - 1);
         log.info(substring);
-//        String resourceFolderLocation = resourceLocator.getResourceFolderLocation();
 
         builder = new ProcessBuilder("python", substring, String.valueOf(surveyDocumentId));
 
@@ -427,7 +335,6 @@ public class SurveyAnalyzeService {
         try {
             exitCode = process.waitFor();
         } catch (InterruptedException e) {
-            // Handle interrupted exception
             exitCode = -1;
         }
 
@@ -442,101 +349,11 @@ public class SurveyAnalyzeService {
 
         System.out.println("Process exited with code " + exitCode);
 
-        //// 서브 프로세스가 출력하는 내용을 받기 위해
+        // 서브 프로세스가 출력하는 내용을 받기 위해
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
         return br.readLine();
     }
-
-    //    @Transactional
-//    public void wordCloud(String stringId) {
-//        long surveyDocumentId = Long.parseLong(stringId);
-//        // 값 분리해서 Analyze DB에 저장
-//        SurveyDetailDto surveyDetailDto = restAPIService.getSurveyDetailDto(surveyDocumentId);
-//        List<QuestionDetailDto> questionDocumentList = surveyDetailDto.getQuestionList();
-//        for (QuestionDetailDto questionDetailDto : questionDocumentList) {
-//            if (questionDetailDto.getQuestionType() != 0) {
-//                continue;
-//            }
-//            // 주관식 문항의 id로 그 주관식 문항에 대답한 questionAnswerList를 찾아옴
-//            // get questionAnswers By CheckAnswerId
-//            List<QuestionAnswerDto> questionAnswersByCheckAnswerId = restAPIService.getQuestionAnswerByCheckAnswerId(questionDetailDto.getId());
-////            List<QuestionAnswerDto> questionAnswersByCheckAnswerId = questionAnswerRepository.findQuestionAnswersByCheckAnswerId(questionDetailDto.getId());
-//
-//            //wordCloud 분석
-//            ArrayList<String> answerList = new ArrayList<>();
-//            for (QuestionAnswerDto questionAnswer : questionAnswersByCheckAnswerId) {
-//                if (questionAnswer.getQuestionType() != 0) {
-//                    continue;
-//                }
-//                answerList.add(questionAnswer.getCheckAnswer());
-//            }
-//            log.info(String.valueOf(answerList));
-//
-//            Resource[] resources = new Resource[0];
-//            try {
-//                resources = ResourcePatternUtils
-//                        .getResourcePatternResolver(new DefaultResourceLoader())
-//                        .getResources("classpath*:python/stopword.txt");
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            String resourceFolderLocation = resourceLocator.getResourceFolderLocation();
-//
-////            log.info(String.valueOf(resources[0]));
-////            String substring = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() -1);
-//            log.info(resourceFolderLocation);
-//
-//            List<String> stopwords = new ArrayList<>();
-//
-//            try (BufferedReader reader = new BufferedReader(new FileReader(resourceFolderLocation + "/python/python4.py"))) {
-//                String line;
-//                while ((line = reader.readLine()) != null) {
-//                    stopwords.add(line);
-//                }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            String filterWords = removeStopwords(answerList, stopwords);
-//
-//            for (String s : Arrays.asList("\\[", "\\]", ",", "'")) {
-//                filterWords = filterWords.replaceAll(s, "");
-//            }
-//            log.info(filterWords);
-//
-//            Map<String, Integer> wordCount = countWords(filterWords);
-//            // Sort the wordCount map in descending order of values
-//            List<Map.Entry<String, Integer>> sortedList = new ArrayList<>(wordCount.entrySet());
-//            sortedList.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
-//
-//            // Print the sorted word counts
-//            log.info("Word Counts (Descending Order):");
-//            List<WordCloudDto> wordCloudList = new ArrayList<>();
-//            for (Map.Entry<String, Integer> entry : sortedList) {
-//                WordCloudDto wordCloud = new WordCloudDto();
-//                wordCloud.setTitle(entry.getKey());
-//                wordCloud.setCount(entry.getValue());
-//                log.info(entry.getKey() + ": " + entry.getValue());
-//                wordCloudList.add(wordCloud);
-//            }
-//
-//            List<WordCloudDto> wordCloudDtos = new ArrayList<>();
-//            for (WordCloudDto wordCloud : wordCloudList) {
-//                WordCloudDto wordCloudDto = new WordCloudDto();
-//                wordCloudDto.setId(wordCloudDto.getId());
-//                wordCloudDto.setTitle(wordCloud.getTitle());
-//                wordCloudDto.setCount(wordCloud.getCount());
-//                wordCloudDtos.add(wordCloudDto);
-//            }
-//
-//            // post to questionDetailDto to set WordCloudList
-//            Long id = questionDetailDto.getId();
-//            restAPIService.postToQuestionToSetWordCloud(id, wordCloudDtos);
-////            questionDetailDto.setWordCloudList(wordCloudList);
-////            questionDocumentRepository.flush();
-//        }
-//    }
 
     private SurveyAnalyzeDto getSurveyDetailAnalyzeDto(SurveyAnalyze surveyAnalyze) {
         SurveyAnalyzeDto surveyAnalyzeDto = new SurveyAnalyzeDto();
