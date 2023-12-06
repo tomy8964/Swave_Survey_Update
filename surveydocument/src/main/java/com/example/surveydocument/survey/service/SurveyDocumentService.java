@@ -130,94 +130,18 @@ public class SurveyDocumentService {
     @Transactional
     public void countChoice(Long choiceId) {
         log.info("countChoice");
-//        // survey document id 값을 키로 하는 lock 을 조회합니다.
-//        RLock rLock = redissonClient.getLock("choice : lock");
-//        // Lock 획득 시도
-//        boolean isLocked = false;
-//        try {
-//            isLocked = rLock.tryLock(5, 10, TimeUnit.SECONDS);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//        log.info(Thread.currentThread().getName() + " lock 획득 시도!");
-//
-//        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
-//        log.info(Thread.currentThread().getName() + " Transaction 시작");
-//
-//        // @Transactional 대신 코드로 트랜잭션을 관리한다
-//        try {
-//            if (!isLocked) {
-//                throw new RuntimeException("failed to get RLock");
-//            }
-//
-//            // 조회수 증가 로직 실행
-//            try {
         Optional<Choice> getChoice = choiceRepository.findById(choiceId);
         if (getChoice.isPresent()) {
             Choice choice = getChoice.get();
             choice.addCount();
         }
-//                // 실행하면 커밋후 트랜잭션 종료
-//                transactionManager.commit(status);
-//                log.info(Thread.currentThread().getName() + " 커밋 후 트랜잭션 종료");
-//            } catch (RuntimeException e) {
-//                // 로직 실행 중 예외가 발생하면 롤백
-//                transactionManager.rollback(status);
-//                log.info(Thread.currentThread().getName() + " 로직 실행 실패");
-//                throw new RuntimeException(e.getMessage());
-//            }
-//
-//        } finally {
-//            // 로직 수행이 끝나면 Lock 반환
-//            if (rLock.isLocked() && rLock.isHeldByCurrentThread()) {
-//                rLock.unlock();
-//                log.info(Thread.currentThread().getName() + " Lock 해제");
-//            }
-//        }
     }
 
     // 설문 응답자 수 + 1
-    // 분산락 실행
     @Transactional
     public void countSurveyDocument(Long surveyDocumentId) throws Exception {
-//        // survey document id 값을 키로 하는 lock 을 조회합니다.
-//        RLock rLock = redissonClient.getLock("survey : lock");
-//        // Lock 획득 시도
-//        boolean isLocked = rLock.tryLock(5, 10, TimeUnit.SECONDS);
-//        log.info(Thread.currentThread().getName() + " lock 획득 시도!");
-//        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
-//        log.info(Thread.currentThread().getName() + " Transaction 시작");
-//
-//        // @Transactional 대신 코드로 트랜잭션을 관리한다
-//        try {
-//            if (!isLocked) {
-//                throw new MessagingException("failed to get RLock");
-//            }
-//
-//            // 조회수 증가 로직 실행
-//            try {
         SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).orElseThrow(null);
         surveyDocument.addCountAnswer();
-//                // 실행하면 커밋후 트랜잭션 종료
-//                transactionManager.commit(status);
-//                log.info(Thread.currentThread().getName() + " 커밋 후 트랜잭션 종료");
-//            } catch (RuntimeException e) {
-//                // 로직 실행 중 예외가 발생하면 롤백
-//                transactionManager.rollback(status);
-//                log.info(Thread.currentThread().getName() + " 로직 실행 실패");
-//                throw new Exception(e.getMessage());
-//            }
-//
-//        } catch (InterruptedException e) {
-//            throw new Exception("Thread Interrupted");
-//        } finally {
-//            // 로직 수행이 끝나면 Lock 반환
-//            if (rLock.isLocked() && rLock.isHeldByCurrentThread()) {
-//                rLock.unlock();
-//                log.info(Thread.currentThread().getName() + " Lock 해제");
-//            }
-//        }
     }
 
     // SurveyDocument Response 보낼 SurveyDetailDto로 변환하는 메서드
@@ -316,22 +240,6 @@ public class SurveyDocumentService {
     public QuestionDetailDto getQuestionByChoiceId(Long id) {
         return getQuestionDto(choiceRepository.findById(id).map(Choice::getQuestionDocument).orElse(null));
     }
-
-//    @Transactional
-//    public void setWordCloud(Long questionId, List<WordCloudDto> wordCloudDtos) {
-//        List<WordCloud> wordCloudList = new ArrayList<>();
-//        for (WordCloudDto wordCloudDto : wordCloudDtos) {
-//            WordCloud wordCloud = new WordCloud();
-//            wordCloud.setId(wordCloudDto.getId());
-//            wordCloud.setTitle(wordCloudDto.getTitle());
-//            wordCloud.setCount(wordCloudDto.getCount());
-//            wordCloud.setQuestionDocument(questionDocumentRepository.findById(questionId).get());
-//            wordCloudList.add(wordCloud);
-//        }
-//        wordCloudRepository.deleteAllByQuestionDocument(questionDocumentRepository.findById(questionId).get());
-//        questionDocumentRepository.findById(questionId).get().setWordCloudList(wordCloudList);
-//        questionDocumentRepository.flush();
-//    }
 
     @Transactional
     @Caching(evict = {
