@@ -41,23 +41,6 @@ public class SurveyDocumentInternalController {
         surveyService.countSurveyDocument(id);
     }
 
-//    @PostMapping(value = "/setWordCloud/{id}")
-//    public void setWordCloud(@PathVariable Long id, @RequestBody List<WordCloudDto> wordCloudList) {
-//        RedissonRedLock lock = new RedissonRedLock(redissonClient.getLock("$surveyDocumentId"));
-//
-//        try {
-//            if (lock.tryLock(1, 3, TimeUnit.SECONDS)) {
-//                // transaction
-//                surveyService.setWordCloud(id, wordCloudList);
-//            } else {
-//                throw new RuntimeException("Failed to acquire lock.");
-//            }
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        } finally {
-//            lock.unlock();
-//        }
-
     @GetMapping(value = "/getChoice/{id}")
     @Cacheable(value = "choice", key = "'choice-' + #id", cacheManager = "cacheManager")
     public ChoiceDetailDto getChoice(@PathVariable Long id) {
