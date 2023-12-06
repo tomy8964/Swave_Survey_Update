@@ -55,12 +55,12 @@ public class SurveyDocument {
     @OneToMany(mappedBy = "surveyDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionDocument> questionDocumentList = new ArrayList<>();
 
-    // 날짜 넣기
+    // 디자인 넣기
     public void setDesign(Design design) {
         this.design = design;
     }
 
-    // 디자인 넣기
+    // 날짜 넣기
     public void setDate(DateManagement date) {
         this.date = date;
     }
