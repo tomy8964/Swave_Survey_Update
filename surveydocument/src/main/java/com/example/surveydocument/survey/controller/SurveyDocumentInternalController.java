@@ -6,10 +6,12 @@ import com.example.surveydocument.survey.response.SurveyDetailDto;
 import com.example.surveydocument.survey.response.SurveyDetailDto2;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", allowCredentials = "true")
@@ -32,7 +34,11 @@ public class SurveyDocumentInternalController {
 
     @PostMapping(value = "/count/{id}")
     public void countChoice(@PathVariable Long id) {
-        surveyService.countChoice(id);
+        try {
+            surveyService.countChoice(id);
+        } catch (RuntimeException e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     // Survey Document 응답자 ++

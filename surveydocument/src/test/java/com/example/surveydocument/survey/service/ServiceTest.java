@@ -275,7 +275,7 @@ public class ServiceTest {
     void service_test5() {
         // given
         SurveyRequestDto surveyRequest = createSurveyRequestDto();
-        Long savedDocumentId = surveyDocumentService.createTest(1L, surveyRequest);
+        Long savedDocumentId = surveyDocumentService.createSurvey(1L, surveyRequest);
         // when
         surveyDocumentService.managementEnable(savedDocumentId, true);
     }
@@ -286,7 +286,7 @@ public class ServiceTest {
     void service_test6() {
         // given
         SurveyRequestDto surveyRequest = createSurveyRequestDto();
-        Long savedDocumentId = surveyDocumentService.createTest(1L, surveyRequest);
+        Long savedDocumentId = surveyDocumentService.createSurvey(1L, surveyRequest);
         // when
         ManagementResponseDto managementResponseDto = surveyDocumentService.managementSurvey(savedDocumentId);
         //then
@@ -300,7 +300,7 @@ public class ServiceTest {
     void service_test7() {
         // given
         SurveyRequestDto surveyRequest = createSurveyRequestDto();
-        Long savedDocumentId = surveyDocumentService.createTest(1L, surveyRequest);
+        Long savedDocumentId = surveyDocumentService.createSurvey(1L, surveyRequest);
         // when
         SurveyDetailDto surveyDetailDto = surveyDocumentService.readSurveyDetail(savedDocumentId);
         //then
@@ -331,7 +331,7 @@ public class ServiceTest {
     public void service_test9() {
         //given
         SurveyRequestDto surveyRequest = createSurveyRequestDto();
-        Long surveyId = surveyDocumentService.createTest(1L, surveyRequest);
+        Long surveyId = surveyDocumentService.createSurvey(1L, surveyRequest);
         SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyId).get();
         List<QuestionDocument> questionDocumentList = surveyDocument.getQuestionDocumentList();
         QuestionDocument questionDocument = questionDocumentList.get(1);

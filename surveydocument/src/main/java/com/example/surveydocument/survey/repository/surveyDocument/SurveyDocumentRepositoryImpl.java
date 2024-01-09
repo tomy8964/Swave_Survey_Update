@@ -56,15 +56,15 @@ public class SurveyDocumentRepositoryImpl implements SurveyDocumentRepositoryCus
     }
 
     @Override
-    public SurveyDocument findSurveyById(Long surveyDocumentId) {
-        return queryFactory
+    public Optional<SurveyDocument> findSurveyById(Long surveyDocumentId) {
+        return Optional.ofNullable(queryFactory
                 .selectFrom(surveyDocument)
                 .leftJoin(surveyDocument.design, design).fetchJoin()
                 .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
                 .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
                 .where(surveyDocument.id.eq(surveyDocumentId))
                 .distinct()
-                .fetchOne();
+                .fetchOne());
     }
 
     @Override
@@ -77,15 +77,14 @@ public class SurveyDocumentRepositoryImpl implements SurveyDocumentRepositoryCus
 
     @Override
     public Optional<SurveyDocument> findByIdToUpdate(Long surveyDocumentId) {
-        SurveyDocument result = queryFactory
+        return Optional.ofNullable(queryFactory
                 .selectFrom(surveyDocument)
                 .leftJoin(surveyDocument.design, design).fetchJoin()
                 .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
                 .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
                 .where(surveyDocument.id.eq(surveyDocumentId))
                 .distinct()
-                .fetchOne();
-        return Optional.ofNullable(result);
+                .fetchOne());
     }
 
     @Override

@@ -7,23 +7,19 @@ import com.example.surveydocument.survey.repository.date.DateRepository;
 import com.example.surveydocument.survey.repository.design.DesignRepository;
 import com.example.surveydocument.survey.repository.questionDocument.QuestionDocumentRepository;
 import com.example.surveydocument.survey.repository.surveyDocument.SurveyDocumentRepository;
-import com.example.surveydocument.survey.repository.wordCloud.WordCloudRepository;
 import com.example.surveydocument.survey.request.*;
 import com.example.surveydocument.survey.response.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -34,28 +30,14 @@ public class SurveyDocumentService {
     private final DesignRepository designRepository;
     private final QuestionDocumentRepository questionDocumentRepository;
     private final ChoiceRepository choiceRepository;
-    private final WordCloudRepository wordCloudRepository;
     private final DateRepository dateRepository;
     private final RestApiService apiService;
-    // redis 분산 락 사용
-    // 분산 락은 Transactional 과 같이 진행되지 않아서 따로 관리로직을 만들어야한다
-    private final RedissonClient redissonClient;
-    private final PlatformTransactionManager transactionManager;
-    Random random = new Random();
-    @Value("${gateway.host}")
-    private String gateway;
 
     @Transactional
     public Long createSurvey(HttpServletRequest request, SurveyRequestDto surveyRequest) {
         // 유저 정보 받아오기
-        // User Module 에서 현재 유저 가져오기
         Long userId = apiService.getCurrentUserFromUser(request);
 
-        return createTest(userId, surveyRequest);
-    }
-
-    @Transactional
-    public Long createTest(Long userId, SurveyRequestDto surveyRequest) {
         // Survey Request 를 Survey Document 에 저장하기
         SurveyDocument surveyDocument = SurveyDocument.builder()
                 .userId(userId)
@@ -113,40 +95,35 @@ public class SurveyDocumentService {
     // list method 로 SurveyDocument 조회
     public Page<SurveyPageDto> readSurveyList(HttpServletRequest request1, PageRequestDto request2) {
         Long userCode = apiService.getCurrentUserFromUser(request1);
-
         PageRequest pageRequest = PageRequest.of(request2.getPage(), 10);
 
         return surveyDocumentRepository.pagingSurvey(userCode, request2.getSort1(), request2.getSort2(), pageRequest);
     }
 
-    public SurveyDetailDto readSurveyDetail(Long id) {
-        return getSurveyDetailDto(id);
-    }
-
     public SurveyDocument getSurveyDocument(Long surveyDocumentId) {
-        return surveyDocumentRepository.findById(surveyDocumentId).get();
+        return surveyDocumentRepository.findById(surveyDocumentId)
+                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyDocumentId));
     }
 
     @Transactional
     public void countChoice(Long choiceId) {
-        log.info("countChoice");
-        Optional<Choice> getChoice = choiceRepository.findById(choiceId);
-        if (getChoice.isPresent()) {
-            Choice choice = getChoice.get();
-            choice.addCount();
-        }
+        choiceRepository.findById(choiceId)
+                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + choiceId))
+                .addCount();
     }
 
     // 설문 응답자 수 + 1
     @Transactional
-    public void countSurveyDocument(Long surveyDocumentId) throws Exception {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId).orElseThrow(null);
-        surveyDocument.addCountAnswer();
+    public void countSurveyDocument(Long surveyDocumentId) {
+        surveyDocumentRepository.findById(surveyDocumentId)
+                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + surveyDocumentId))
+                .addCountAnswer();
     }
 
     // SurveyDocument Response 보낼 SurveyDetailDto로 변환하는 메서드
-    private SurveyDetailDto getSurveyDetailDto(Long surveyDocumentId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId);
+    public SurveyDetailDto readSurveyDetail(Long surveyDocumentId) {
+        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId)
+                .orElseThrow(() -> new RuntimeException("No surveyDocument found with ID: " + surveyDocumentId));
         SurveyDetailDto surveyDetailDto = new SurveyDetailDto();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
@@ -225,7 +202,8 @@ public class SurveyDocumentService {
     }
 
     public ChoiceDetailDto getChoice(Long id) {
-        Choice choice = choiceRepository.findById(id).orElse(null);
+        Choice choice = choiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id));
         ChoiceDetailDto choiceDetailDto = new ChoiceDetailDto();
         choiceDetailDto.setId(choice.getId());
         choiceDetailDto.setTitle(choice.getTitle());
@@ -234,52 +212,45 @@ public class SurveyDocumentService {
     }
 
     public QuestionDetailDto getQuestion(Long id) {
-        return getQuestionDto(questionDocumentRepository.findById(id).orElse(null));
+        return getQuestionDto(
+                questionDocumentRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id)));
     }
 
     public QuestionDetailDto getQuestionByChoiceId(Long id) {
-        return getQuestionDto(choiceRepository.findById(id).map(Choice::getQuestionDocument).orElse(null));
+        return getQuestionDto(
+                choiceRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id))
+                        .getQuestionDocument());
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
-            @CacheEvict(value = "survey", key = "'survey-' + #surveyId", cacheManager = "cacheManager"),
-            @CacheEvict(value = "survey2", key = "'survey2-' + #surveyId", cacheManager = "cacheManager")
-    })
     public void updateSurvey(HttpServletRequest request, SurveyRequestDto requestDto, Long surveyId) {
-        Optional<SurveyDocument> byId = surveyDocumentRepository.findByIdToUpdate(surveyId);
-        if (byId.isPresent()) {
-            SurveyDocument surveyDocument = byId.get();
-            Long userId = surveyDocument.getUserId();
-            Long jwtUserId = apiService.getCurrentUserFromUser(request);
-            if (Objects.equals(userId, jwtUserId)) {
-                surveyDocument.updateSurvey(requestDto);
-            }
+        SurveyDocument surveyDocument = surveyDocumentRepository.findByIdToUpdate(surveyId)
+                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyId));
+        Long userId = surveyDocument.getUserId();
+        Long jwtUserId = apiService.getCurrentUserFromUser(request);
+        if (Objects.equals(userId, jwtUserId)) {
+            surveyDocument.updateSurvey(requestDto);
         }
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
-            @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager"),
-            @CacheEvict(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
-    })
-    public void deleteSurvey(HttpServletRequest request, Long id) {
-        Optional<SurveyDocument> byId = surveyDocumentRepository.findById(id);
-        if (byId.isPresent()) {
-            SurveyDocument surveyDocument = byId.get();
-            Long userId = surveyDocument.getUserId();
-            Long jwtUserId = apiService.getCurrentUserFromUser(request);
-            if (Objects.equals(userId, jwtUserId)) {
-                surveyDocumentRepository.deleteById(id);
-            }
+    public void deleteSurvey(HttpServletRequest request, Long surveyId) {
+        SurveyDocument surveyDocument = surveyDocumentRepository.findByIdToUpdate(surveyId)
+                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyId));
+        Long userId = surveyDocument.getUserId();
+        Long jwtUserId = apiService.getCurrentUserFromUser(request);
+        if (Objects.equals(userId, jwtUserId)) {
+            surveyDocumentRepository.deleteById(surveyId);
+
         }
     }
 
     @Transactional
     public void managementDate(Long id, DateDto request) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findById(id).get();
+        SurveyDocument surveyDocument = surveyDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + id));
         surveyDocument.setDate(DateManagement.builder()
                 .startDate(request.getStartDate())
                 .deadline(request.getEndDate())
@@ -297,7 +268,8 @@ public class SurveyDocumentService {
 
 
     public SurveyDetailDto2 readSurveyDetail2(Long surveyDocumentId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId);
+        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId)
+                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyDocumentId));
         SurveyDetailDto2 surveyDetailDto = new SurveyDetailDto2();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
@@ -410,7 +382,7 @@ public class SurveyDocumentService {
             wordCloudDtos.add(wordCloudDto);
         }
         questionDto.setWordCloudDtos(wordCloudDtos);
+
         return questionDto;
     }
-
 }
