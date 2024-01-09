@@ -1,6 +1,5 @@
 package com.example.surveydocument.survey.controller;
 
-import com.example.surveydocument.survey.domain.SurveyDocument;
 import com.example.surveydocument.survey.request.DateDto;
 import com.example.surveydocument.survey.request.PageRequestDto;
 import com.example.surveydocument.survey.request.SurveyRequestDto;
@@ -31,25 +30,35 @@ public class SurveyDocumentExternalController {
     }
 
     @PostMapping(value = "/survey-list")
-    @Cacheable(value = "surveyPage", key = "'surveyPage-' + #pageRequest", cacheManager = "cacheManager" )
+    @Cacheable(value = "surveyPage", key = "'surveyPage-' + #pageRequest", cacheManager = "cacheManager")
     public Page<SurveyPageDto> readList(HttpServletRequest request, @RequestBody PageRequestDto pageRequest) {
         return surveyService.readSurveyList(request, pageRequest);
     }
 
     @GetMapping(value = "/survey-list/{id}")
-    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager" )
+    @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
     public SurveyDetailDto readDetail(@PathVariable Long id) {
         return surveyService.readSurveyDetail(id);
     }
 
     // 설문 수정
     @PutMapping("/update/{id}")
+    @Caching(evict = {
+            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
+    })
     public void updateSurvey(HttpServletRequest request, @RequestBody SurveyRequestDto requestDto, @PathVariable Long id) {
         surveyService.updateSurvey(request, requestDto, id);
     }
 
     // 설문 삭제
     @PatchMapping("/delete/{id}")
+    @Caching(evict = {
+            @CacheEvict(value = "surveyPage", allEntries = true, cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager"),
+            @CacheEvict(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
+    })
     public String deleteSurvey(HttpServletRequest request, @PathVariable Long id) {
         surveyService.deleteSurvey(request, id);
         return "Success";
