@@ -9,10 +9,12 @@ import com.example.surveydocument.survey.response.SurveyPageDto;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import okhttp3.Response;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -84,7 +86,7 @@ public class SurveyDocumentExternalController {
 
     // 설문 응답수 추가
     @GetMapping("/survey/count/{id}")
-    public void countSurveyDocument(@PathVariable Long id) throws Exception {
+    public void countSurveyDocument(@PathVariable Long id) {
         surveyService.countSurveyDocument(id);
     }
 
