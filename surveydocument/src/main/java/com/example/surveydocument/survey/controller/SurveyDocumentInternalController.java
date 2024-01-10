@@ -34,16 +34,12 @@ public class SurveyDocumentInternalController {
 
     @PostMapping(value = "/count/{id}")
     public void countChoice(@PathVariable Long id) {
-        try {
-            surveyService.countChoice(id);
-        } catch (RuntimeException e) {
-            log.error(e.getMessage(), e);
-        }
+        surveyService.countChoice(id);
     }
 
     // Survey Document 응답자 ++
     @PostMapping(value = "/countAnswer/{id}")
-    public void countAnswer(@PathVariable Long id) throws Exception {
+    public void countAnswer(@PathVariable Long id) {
         surveyService.countSurveyDocument(id);
     }
 
@@ -56,7 +52,6 @@ public class SurveyDocumentInternalController {
     @GetMapping(value = "/getQuestion/{id}")
     @Cacheable(value = "question", key = "'question-' + #id", cacheManager = "cacheManager")
     public QuestionDetailDto getQuestion(@PathVariable Long id) {
-
         return surveyService.getQuestion(id);
     }
 

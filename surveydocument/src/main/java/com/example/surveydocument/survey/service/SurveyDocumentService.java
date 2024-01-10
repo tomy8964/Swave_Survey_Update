@@ -2,6 +2,9 @@ package com.example.surveydocument.survey.service;
 
 import com.example.surveydocument.restAPI.service.RestApiService;
 import com.example.surveydocument.survey.domain.*;
+import com.example.surveydocument.survey.exception.InvalidInterCommunicationException;
+import com.example.surveydocument.survey.exception.InvalidUserException;
+import com.example.surveydocument.survey.exception.NotFoundException;
 import com.example.surveydocument.survey.repository.choice.ChoiceRepository;
 import com.example.surveydocument.survey.repository.date.DateRepository;
 import com.example.surveydocument.survey.repository.design.DesignRepository;
@@ -36,7 +39,8 @@ public class SurveyDocumentService {
     @Transactional
     public Long createSurvey(HttpServletRequest request, SurveyRequestDto surveyRequest) {
         // 유저 정보 받아오기
-        Long userId = apiService.getCurrentUserFromUser(request);
+        Long userId = apiService.getCurrentUserFromJWTToken(request)
+                .orElseThrow(() -> new InvalidUserException("올바르지 않은 유저입니다."));
 
         // Survey Request 를 Survey Document 에 저장하기
         SurveyDocument surveyDocument = SurveyDocument.builder()
@@ -94,7 +98,8 @@ public class SurveyDocumentService {
 
     // list method 로 SurveyDocument 조회
     public Page<SurveyPageDto> readSurveyList(HttpServletRequest request1, PageRequestDto request2) {
-        Long userCode = apiService.getCurrentUserFromUser(request1);
+        Long userCode = apiService.getCurrentUserFromJWTToken(request1)
+                .orElseThrow(() -> new InvalidUserException("올바르지 않은 유저입니다."));
         PageRequest pageRequest = PageRequest.of(request2.getPage(), 10);
 
         return surveyDocumentRepository.pagingSurvey(userCode, request2.getSort1(), request2.getSort2(), pageRequest);
@@ -102,13 +107,13 @@ public class SurveyDocumentService {
 
     public SurveyDocument getSurveyDocument(Long surveyDocumentId) {
         return surveyDocumentRepository.findById(surveyDocumentId)
-                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyDocumentId));
+                .orElseThrow(() -> new NotFoundException("No SurveyDocument found with ID: " + surveyDocumentId));
     }
 
     @Transactional
     public void countChoice(Long choiceId) {
         choiceRepository.findById(choiceId)
-                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + choiceId))
+                .orElseThrow(() -> new NotFoundException("No Choice found with ID: " + choiceId))
                 .addCount();
     }
 
@@ -116,14 +121,14 @@ public class SurveyDocumentService {
     @Transactional
     public void countSurveyDocument(Long surveyDocumentId) {
         surveyDocumentRepository.findById(surveyDocumentId)
-                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + surveyDocumentId))
+                .orElseThrow(() -> new NotFoundException("No Choice found with ID: " + surveyDocumentId))
                 .addCountAnswer();
     }
 
     // SurveyDocument Response 보낼 SurveyDetailDto로 변환하는 메서드
     public SurveyDetailDto readSurveyDetail(Long surveyDocumentId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId)
-                .orElseThrow(() -> new RuntimeException("No surveyDocument found with ID: " + surveyDocumentId));
+                .orElseThrow(() -> new NotFoundException("No surveyDocument found with ID: " + surveyDocumentId));
         SurveyDetailDto surveyDetailDto = new SurveyDetailDto();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
@@ -158,7 +163,8 @@ public class SurveyDocumentService {
             if (questionDocument.getQuestionType() == 0) {
                 // 주관식 답변들 리스트
                 // REST API GET questionAnswersByCheckAnswerId
-                List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
+                List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId())
+                        .orElseThrow(() -> new InvalidInterCommunicationException("내부 통신 오류입니다."));
                 for (QuestionAnswerDto questionAnswer : questionAnswerList) {
                     // 그 중에 주관식 답변만
                     if (questionAnswer.getQuestionType() == 0) {
@@ -203,7 +209,7 @@ public class SurveyDocumentService {
 
     public ChoiceDetailDto getChoice(Long id) {
         Choice choice = choiceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("No Choice found with ID: " + id));
         ChoiceDetailDto choiceDetailDto = new ChoiceDetailDto();
         choiceDetailDto.setId(choice.getId());
         choiceDetailDto.setTitle(choice.getTitle());
@@ -214,43 +220,44 @@ public class SurveyDocumentService {
     public QuestionDetailDto getQuestion(Long id) {
         return getQuestionDto(
                 questionDocumentRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id)));
+                        .orElseThrow(() -> new NotFoundException("No Choice found with ID: " + id)));
     }
 
     public QuestionDetailDto getQuestionByChoiceId(Long id) {
         return getQuestionDto(
                 choiceRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("No Choice found with ID: " + id))
+                        .orElseThrow(() -> new NotFoundException("No Choice found with ID: " + id))
                         .getQuestionDocument());
     }
 
     @Transactional
     public void updateSurvey(HttpServletRequest request, SurveyRequestDto requestDto, Long surveyId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findByIdToUpdate(surveyId)
-                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyId));
+                .orElseThrow(() -> new NotFoundException("No SurveyDocument found with ID: " + surveyId));
         Long userId = surveyDocument.getUserId();
-        Long jwtUserId = apiService.getCurrentUserFromUser(request);
+        Long jwtUserId = apiService.getCurrentUserFromJWTToken(request)
+                .orElseThrow(() -> new InvalidUserException("올바르지 않은 유저입니다."));
         if (Objects.equals(userId, jwtUserId)) {
             surveyDocument.updateSurvey(requestDto);
-        }
+        } else throw new InvalidUserException("올바르지 않은 유저입니다.");
     }
 
     @Transactional
     public void deleteSurvey(HttpServletRequest request, Long surveyId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findByIdToUpdate(surveyId)
-                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyId));
+                .orElseThrow(() -> new NotFoundException("No SurveyDocument found with ID: " + surveyId));
         Long userId = surveyDocument.getUserId();
-        Long jwtUserId = apiService.getCurrentUserFromUser(request);
+        Long jwtUserId = apiService.getCurrentUserFromJWTToken(request)
+                .orElseThrow(() -> new InvalidUserException("올바르지 않은 유저입니다."));
         if (Objects.equals(userId, jwtUserId)) {
             surveyDocumentRepository.deleteById(surveyId);
-
-        }
+        } else throw new InvalidUserException("올바르지 않은 유저입니다.");
     }
 
     @Transactional
     public void managementDate(Long id, DateDto request) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("No SurveyDocument found with ID: " + id));
         surveyDocument.setDate(DateManagement.builder()
                 .startDate(request.getStartDate())
                 .deadline(request.getEndDate())
@@ -269,7 +276,7 @@ public class SurveyDocumentService {
 
     public SurveyDetailDto2 readSurveyDetail2(Long surveyDocumentId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyDocumentId)
-                .orElseThrow(() -> new RuntimeException("No SurveyDocument found with ID: " + surveyDocumentId));
+                .orElseThrow(() -> new NotFoundException("No SurveyDocument found with ID: " + surveyDocumentId));
         SurveyDetailDto2 surveyDetailDto = new SurveyDetailDto2();
 
         // SurveyDocument에서 SurveyDetailDto로 데이터 복사
@@ -291,7 +298,8 @@ public class SurveyDocumentService {
             if (questionDocument.getQuestionType() == 0) {
                 // 주관식 답변들 리스트
                 // REST API GET questionAnswersByCheckAnswerId
-                List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
+                List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId())
+                        .orElseThrow(() -> new InvalidInterCommunicationException("내부 통신 오류입니다."));
                 for (QuestionAnswerDto questionAnswer : questionAnswerList) {
                     // 그 중에 주관식 답변만
                     if (questionAnswer.getQuestionType() == 0) {
@@ -348,7 +356,8 @@ public class SurveyDocumentService {
         if (questionDocument.getQuestionType() == 0) {
             // 주관식 답변들 리스트
             // REST API GET questionAnswersByCheckAnswerId
-            List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
+            List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId())
+                    .orElseThrow(() -> new InvalidUserException("올바르지 않은 유저입니다."));
             for (QuestionAnswerDto questionAnswer : questionAnswerList) {
                 // 그 중에 주관식 답변만
                 if (questionAnswer.getQuestionType() == 0) {

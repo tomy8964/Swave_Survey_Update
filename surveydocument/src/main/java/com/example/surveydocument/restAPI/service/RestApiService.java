@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +32,8 @@ public class RestApiService {
     }
 
     // Current User 정보 가져오기
-    public Long getCurrentUserFromUser(HttpServletRequest request) {
+    public Optional<Long> getCurrentUserFromJWTToken(HttpServletRequest request) {
         String jwtHeader = request.getHeader("Authorization");
-//        if (jwtHeader==null) throw new RuntimeException("Authorization is null!!");
         // WebClient 가져오기
         log.info("현재 유저정보를 가져옵니다");
 
@@ -50,11 +51,11 @@ public class RestApiService {
         // check log
         log.info("현재 유저의 ID: " + userId);
 
-        return userId;
+        return Optional.ofNullable(userId);
     }
 
     // Answer Id 값을 통해 Question Answer 불러오기
-    public List<QuestionAnswerDto> getQuestionAnswersByCheckAnswerId(Long id) {
+    public Optional<List<QuestionAnswerDto>> getQuestionAnswersByCheckAnswerId(Long id) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET questionAnswer List by checkAnswerId");
@@ -63,7 +64,7 @@ public class RestApiService {
         String apiUrl = "http://"+ gateway +"/api/answer/internal/getQuestionAnswerByCheckAnswerId/"+ id;
 
         // Make a GET request to the API and retrieve the response
-        List<QuestionAnswerDto> questionAnswerList = webClient.get()
+        Optional<List<QuestionAnswerDto>> questionAnswerList = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
@@ -76,8 +77,7 @@ public class RestApiService {
                         throw new RuntimeException(e);
                     }
                 })
-                .blockOptional()
-                .orElse(null);
+                .blockOptional();
 
         // Process the response as needed
         System.out.println("Request: " + questionAnswerList);

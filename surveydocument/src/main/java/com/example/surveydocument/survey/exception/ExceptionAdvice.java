@@ -10,9 +10,19 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ExceptionAdvice {
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> application(RuntimeException e) {
-        log.error("Error occurs {}", e.toString());
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?> notFoundException(NotFoundException e) {
+        log.error("Error occurs {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    }
+    @ExceptionHandler(InvalidUserException.class)
+    public ResponseEntity<?> invalidUserException(InvalidUserException e) {
+        log.error("Error occurs {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+    @ExceptionHandler(InvalidUserException.class)
+    public ResponseEntity<?> InvalidInterCommunicationException(InvalidInterCommunicationException e) {
+        log.error("Error occurs {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 }
