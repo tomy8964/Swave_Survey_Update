@@ -40,7 +40,7 @@ out/
 *.yml
 
 ### properties ###
-*.properties
+#*.properties
 
 /generated
 
