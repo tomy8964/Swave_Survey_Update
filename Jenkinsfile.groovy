@@ -153,7 +153,7 @@ pipeline {
                     sh "git add analysis.yaml"
                     sshagent(credentials: ['git-ssh']) {
                         sh "git commit -m '[UPDATE] v${currentBuild.number} image versioning'"
-                        sh "git remote set-url origin git@github.com:KEA-SWAVE-SURVEY/argocd-back.git"
+                        sh "git remote set-url origin git@github.com:tomy8964/argocd-back.git"
                         sh "git push -u origin main"
                     }
                 }

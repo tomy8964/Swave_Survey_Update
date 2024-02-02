@@ -20,7 +20,7 @@ public class ExceptionAdvice {
         log.error("Error occurs {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
-    @ExceptionHandler(InvalidUserException.class)
+    @ExceptionHandler(InvalidInterCommunicationException.class)
     public ResponseEntity<?> InvalidInterCommunicationException(InvalidInterCommunicationException e) {
         log.error("Error occurs {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
