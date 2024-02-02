@@ -9,7 +9,7 @@ pipeline {
                         color: '#FFFF00',
                         message: "STARTED: Job ${env.JOB_NAME}"
                 )
-                git branch: 'master', credentialsId: 'git-hamgeonwook', url: 'https://github.com/KEA-SWAVE-SURVEY/spring-gateway/'
+                git branch: 'master', credentialsId: 'git-hamgeonwook', url: 'https://github.com/tomy8964/Swave_Survey_Update/'
             }
         }
         
@@ -140,7 +140,7 @@ pipeline {
         stage('AgroCD Manifest Update') {
             steps {
                 git credentialsId: 'git-hamgeonwook',
-                        url: 'https://github.com/KEA-SWAVE-SURVEY/argocd-back',
+                        url: 'https://github.com/tomy8964/argocd-back',
                         branch: 'main'
                 dir('apps') {
                     sh "sed -i 's/user-back:.*\$/user-back:${currentBuild.number}/g' user.yaml"
