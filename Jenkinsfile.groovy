@@ -151,6 +151,7 @@ pipeline {
                     sh "git add response.yaml"
                     sh "sed -i 's/analysis-back:.*\$/analysis-back:${currentBuild.number}/g' analysis.yaml"
                     sh "git add analysis.yaml"
+                    
                     sshagent(credentials: ['git-ssh']) {
                         sh "git commit -m '[UPDATE] v${currentBuild.number} image versioning'"
                         sh "git remote set-url origin git@github.com:tomy8964/argocd-back.git"
