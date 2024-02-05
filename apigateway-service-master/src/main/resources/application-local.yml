@@ -1,0 +1,83 @@
+## Current Server Profile Setting
+server:
+  port: 8080
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update #create update none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: survey-analyze
+          uri: http://localhost:8084/
+          predicates:
+            - Path=/api/analyze/internal/**
+            - Method=GET,POST
+
+        - id: survey-analyze
+          uri: http://localhost:8084/
+          predicates:
+            - Path=/api/analyze/external/**
+            - Method=GET,POST
+          filters:
+            - AuthorizationHeaderFilter
+
+        - id: surveyanswer
+          uri: http://localhost:8083/
+          predicates:
+            - Path=/api/answer/external/**
+            - Method=GET,POST
+        - id: surveyanswer
+          uri: http://localhost:8083/
+          predicates:
+            - Path=/api/answer/internal/**
+            - Method=GET,POST
+        - id: surveydocument
+          uri: http://localhost:8082/
+          predicates:
+            - Path=/api/document/external/**
+            - Method=GET,POST,PUT
+          filters:
+            - AuthorizationHeaderFilter
+        - id: surveydocument
+          uri: http://localhost:8082/
+          predicates:
+            - Path=/api/document/internal/**
+            - Method=GET,POST
+        - id: surveydocument
+          uri: http://localhost:8082/
+          predicates:
+            - Path=/api/document/oauth/**
+            - Method=GET,POST
+
+        - id: user
+          uri: http://localhost:8081/
+          predicates:
+            - Path=/api/user/external/** # 프론트에서 요청
+            - Method=GET,POST
+        - id: user
+          uri: http://localhost:8081/
+          predicates:
+            - Path=/api/user/internal/** # 모듈간 통신
+            - Method=GET,POST
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, httptrace
+
+token:
+  expiration-time: 86400000 # 하루짜리 토큰 생성
+
+  secret: changhwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwan
+logging:
+  level:
+    org.springframework.cloud.gateway: trace
+    reactor.netty: trace
+---
