@@ -137,6 +137,37 @@ pipeline {
             }
         }
 
+        stage('Build SpringGateWay') {
+            steps {
+                dir('apigateway-service-master') {
+                    sh "chmod +x gradlew"
+                    sh "./gradlew clean bootJar"
+                    script{
+                        image = docker.build("hamgeonwook/gateway")
+                        docker.withRegistry('https://registry.hub.docker.com/repository/docker/hamgeonwook/gateway/', 'docker-hub-credentials') {
+                            image.push("${env.BUILD_NUMBER}")
+                        }
+                    }
+                }
+            }
+            post {
+                success {
+                    slackSend (
+                            channel: '#jenkins',
+                            color: '#00FF00',
+                            message: "SUCCESS: Job ${env.JOB_NAME} Build SpringGateWay"
+                    )
+                }
+                failure {
+                    slackSend (
+                            channel: '#jenkins',
+                            color: '#FF0000',
+                            message: "FAIL: Job ${env.JOB_NAME} Build SpringGateWay"
+                    )
+                }
+            }
+        }
+
         stage('AgroCD Manifest Update') {
             steps {
                 git credentialsId: 'git-hamgeonwook',
@@ -151,6 +182,8 @@ pipeline {
                     sh "git add response.yaml"
                     sh "sed -i 's/analysis-back:.*\$/analysis-back:${currentBuild.number}/g' analysis.yaml"
                     sh "git add analysis.yaml"
+                    sh "sed -i 's/gateway:.*\$/analysis-back:${currentBuild.number}/g' gateway.yaml"
+                    sh "git add gateway.yaml"
                     
                     sshagent(credentials: ['git-ssh']) {
                         sh "git commit -m '[UPDATE] v${currentBuild.number} image versioning'"
