@@ -182,7 +182,7 @@ pipeline {
                     sh "git add response.yaml"
                     sh "sed -i 's/analysis-back:.*\$/analysis-back:${currentBuild.number}/g' analysis.yaml"
                     sh "git add analysis.yaml"
-                    sh "sed -i 's/gateway:.*\$/analysis-back:${currentBuild.number}/g' gateway.yaml"
+                    sh "sed -i 's/gateway:.*\$/gateway:${currentBuild.number}/g' gateway.yaml"
                     sh "git add gateway.yaml"
                     
                     sshagent(credentials: ['git-ssh']) {
