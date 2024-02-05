@@ -71,7 +71,7 @@ management:
  endpoints:
    web:
      exposure:
-       include: /*
+       include: refresh, health, beans, httptrace
 token:
   expiration-time: 86400000 # 하루짜리 토큰 생성
   secret: changhwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwan
