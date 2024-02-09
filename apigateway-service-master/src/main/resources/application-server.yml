@@ -67,6 +67,11 @@ spring:
           predicates:
             - Path=/api/user/internal/**
             - Method=GET,POST
+
+        - id: default-route
+          uri: forward:/default-response
+          predicates:
+            - Path=/**
 management:
  endpoints:
    web:
