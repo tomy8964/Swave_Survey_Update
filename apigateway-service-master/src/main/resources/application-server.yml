@@ -83,5 +83,5 @@ token:
 logging:
   level:
     org.springframework.cloud.gateway: trace
-    reactor.netty: trace
+    # reactor.netty: trace
 ---
