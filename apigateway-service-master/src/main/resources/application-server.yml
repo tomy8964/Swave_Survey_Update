@@ -82,6 +82,6 @@ token:
   secret: changhwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwanchanghwan2022changhwan
 logging:
   level:
-    org.springframework.cloud.gateway: trace
+    org.springframework.cloud.gateway: INFO
     # reactor.netty: trace
 ---
