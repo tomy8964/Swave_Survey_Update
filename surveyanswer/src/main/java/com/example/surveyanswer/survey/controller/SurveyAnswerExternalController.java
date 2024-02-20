@@ -1,5 +1,6 @@
 package com.example.surveyanswer.survey.controller;
 
+import com.example.surveyanswer.redis.lock.DistributedLock;
 import com.example.surveyanswer.survey.domain.SurveyAnswer;
 import com.example.surveyanswer.survey.response.SurveyAnswerDto;
 import com.example.surveyanswer.survey.response.SurveyDetailDto;
@@ -36,6 +37,7 @@ public class SurveyAnswerExternalController {
             @CacheEvict(value = "responseList", key = "'responseList-' + #surveyForm.id", cacheManager = "cacheManager" ),
             @CacheEvict(value = "getQuestionAnswerByCheckAnswerId", allEntries = true, cacheManager = "cacheManager" )
     })
+    @DistributedLock
     public void createResponse(@RequestBody SurveyResponseDto surveyForm) {
         surveyService.createSurveyAnswer(surveyForm);
     }

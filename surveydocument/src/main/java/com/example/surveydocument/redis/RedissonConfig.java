@@ -1,4 +1,4 @@
-package com.example.surveydocument.redis.lock;
+package com.example.surveydocument.redis;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

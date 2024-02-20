@@ -49,5 +49,4 @@ public class RedissonConfig {
         builder.cacheDefaults(configuration);
         return builder.build();
     }
-
 }

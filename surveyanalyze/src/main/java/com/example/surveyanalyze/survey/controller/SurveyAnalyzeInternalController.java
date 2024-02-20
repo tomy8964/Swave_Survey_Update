@@ -1,5 +1,6 @@
 package com.example.surveyanalyze.survey.controller;
 
+import com.example.surveyanalyze.redis.lock.DistributedLock;
 import com.example.surveyanalyze.survey.service.SurveyAnalyzeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ public class SurveyAnalyzeInternalController {
 
     // 설문 분석 시작
     @Transactional
+    @DistributedLock
     @PostMapping(value = "/research/analyze/create")
     @CacheEvict(value = "surveyAnalyze", key = "'surveyAnalyze-' + #surveyId", cacheManager = "cacheManager" )
     public String saveAnalyze(@RequestBody String surveyId) {
