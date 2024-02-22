@@ -3,61 +3,54 @@ package com.example.surveydocument.chatGPT.sevice;
 
 import com.example.surveydocument.chatGPT.config.ChatGptConfig;
 import com.example.surveydocument.chatGPT.request.*;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.http.*;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 
 @Service
 public class ChatGptService {
 
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
-    public ChatGptService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public ChatGptService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl(ChatGptConfig.URL).build();
     }
 
-    private HttpEntity<ChatGptRequestDto> buildHttpEntity(ChatGptRequestDto requestDto) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(ChatGptConfig.MEDIA_TYPE));
-        headers.add(ChatGptConfig.AUTHORIZATION, ChatGptConfig.BEARER + ChatGptConfig.API_KEY);
-        return new HttpEntity<>(requestDto, headers);
+    private Mono<ChatGptResponseDto> getResponse(ChatGptRequestDto requestDto) {
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder.path(ChatGptConfig.URL).build())
+                .header(ChatGptConfig.AUTHORIZATION, ChatGptConfig.BEARER + ChatGptConfig.API_KEY)
+                .contentType(MediaType.parseMediaType(ChatGptConfig.MEDIA_TYPE))
+                .body(BodyInserters.fromValue(requestDto))
+                .retrieve()
+                .bodyToMono(ChatGptResponseDto.class);
     }
 
-    private ChatGptChoice getResponse(HttpEntity<ChatGptRequestDto> chatGptRequestDtoHttpEntity) {
-        ResponseEntity<ChatGptResponseDto> responseEntity = restTemplate.postForEntity(
-                ChatGptConfig.URL,
-                chatGptRequestDtoHttpEntity,
-                ChatGptResponseDto.class);
-        System.out.println("responseEntity = " + responseEntity);
-        return responseEntity.getBody().getChoices().get(0);
-    }
-
-    private ChatGptChoice askQuestion(ChatGptQuestionRequestDto requestDto) {
+    private Mono<ChatGptChoice> askQuestion(ChatGptQuestionRequestDto requestDto) {
         Message message = Message.builder()
                 .role(ChatGptConfig.ROLE_USER)
                 .content(requestDto.getQuestion())
                 .build();
         System.out.println(message);
         return this.getResponse(
-                this.buildHttpEntity(
-                        new ChatGptRequestDto(
-                                ChatGptConfig.MODEL,
-                                Collections.singletonList(message)
-                        )
+                new ChatGptRequestDto(
+                        ChatGptConfig.MODEL,
+                        Collections.singletonList(message)
                 )
-        );
+        ).map(response -> response.getChoices().get(0));
     }
 
-    public ChatResultDto chatGptResult(ChatGptQuestionRequestDto requestDto) {
-
-        ChatGptChoice chatGptChoice=askQuestion(requestDto);
-        return ChatResultDto.builder()
-                .index(chatGptChoice.getIndex())
-                .text(chatGptChoice.getMessage().getContent())
-                .finishReason(chatGptChoice.getFinishReason())
-                .build();
+    public Mono<ChatResultDto> chatGptResult(ChatGptQuestionRequestDto requestDto) {
+        return askQuestion(requestDto).map(chatGptChoice ->
+                ChatResultDto.builder()
+                        .index(chatGptChoice.getIndex())
+                        .text(chatGptChoice.getMessage().getContent())
+                        .finishReason(chatGptChoice.getFinishReason())
+                        .build()
+        );
     }
 }

@@ -1,9 +1,5 @@
 package com.example.surveydocument.redis;
 
-import org.redisson.Redisson;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
-import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +8,6 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
@@ -20,19 +15,11 @@ import java.time.Duration;
 
 @Configuration
 public class RedissonConfig {
+    private static final String REDISSON_HOST_PREFIX = "redis://";
     @Value("${spring.cache.redis.host}")
     private String redisHost;
     @Value("${spring.cache.redis.port}")
     private int redisPort;
-
-    private static final String REDISSON_HOST_PREFIX = "redis://";
-
-    @Bean
-    public RedissonClient redissonClient() {
-        Config config = new Config();
-        config.useSingleServer().setAddress(REDISSON_HOST_PREFIX + redisHost + ":" + redisPort);
-        return Redisson.create(config);
-    }
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -51,5 +38,4 @@ public class RedissonConfig {
         builder.cacheDefaults(configuration);
         return builder.build();
     }
-
 }

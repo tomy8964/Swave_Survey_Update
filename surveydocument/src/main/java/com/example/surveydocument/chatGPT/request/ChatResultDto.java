@@ -3,7 +3,6 @@ package com.example.surveydocument.chatGPT.request;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-@Getter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
