@@ -75,8 +75,8 @@ dependencies {
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-    implementation "com.squareup.okhttp3:okhttp:4.10.0"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.12.0"
 
     // mock server
     testImplementation 'org.mock-server:mockserver-netty:5.12.0'
@@ -99,6 +99,7 @@ dependencies {
 }
 
 tasks.named('test') {
+    outputs.dir snippetsDir
     outputs.dir snippetsDir
     useJUnitPlatform()
     finalizedBy 'jacocoTestReport'
@@ -167,7 +168,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.00
+                minimum = 1.00
             }
 
             excludes = [] + Qdomains // 제외할 Qdomains 패턴 추가

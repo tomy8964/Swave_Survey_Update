@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.*;
 
@@ -34,10 +36,77 @@ import java.util.*;
 public class OAuthService {
 
     private final UserRepository userRepository;
+    private final WebClient webClient = WebClient.builder().build();
     private RestTemplate rt = new RestTemplate();
 
     public OAuthService(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    private static OauthToken getOAuthToken(String provider, String tokenResponse) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        OauthToken oauthToken;
+        try {
+            if (provider.equals("git")) {
+                // 문자열 파싱하여 Map 객체 생성
+                Map<String, String> map = new HashMap<>();
+                String[] pairs = Objects.requireNonNull(tokenResponse).split("&");
+                Arrays.stream(pairs).map(pair -> pair.split("=", 2)).forEach(tokens -> {
+                    String key = tokens[0];
+                    String value = tokens[1];
+                    map.put(key, value);
+                });
+                // Map 객체를 JSON 형태로 변환
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(map);
+
+                oauthToken = objectMapper.readValue(json, OauthToken.class);
+            } else {
+                oauthToken = objectMapper.readValue(tokenResponse, OauthToken.class);
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Json Parsing Error", e);
+        }
+        return oauthToken;
+    }
+
+    private static HttpEntity<MultiValueMap<String, String>> getTokenRequest(String code, String provider) {
+        String grantType;
+        String clientId;
+        String clientSecret;
+        String redirectUri;
+
+        switch (provider) {
+            case "kakao" -> {
+                grantType = "authorization_code";
+                clientId = "4646a32b25c060e42407ceb8c13ef14a";
+                clientSecret = "AWyAH1M24R9EYfUjJ1KCxcsh3DwvK8F7";
+                redirectUri = "http://172.16.210.80:80/oauth/callback/kakao";
+            }
+            case "google" -> {
+                grantType = "authorization_code";
+                clientId = "278703087355-limdvm0almc07ldn934on122iorpfdv5.apps.googleusercontent.com";
+                clientSecret = "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";
+                redirectUri = "http://172.16.210.80:80/oauth/callback/google";
+            }
+            default -> {
+                grantType = "authorization_code";
+                clientId = "Iv1.986aaa4d78140fb7";
+                clientSecret = "0c8e730012e8ca8e41a3922358572457f5cc57e4";
+                redirectUri = "http://172.16.210.80:80/oauth/callback/git";
+            }
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", grantType);
+        params.add("client_id", clientId);
+        params.add("redirect_uri", redirectUri);
+        params.add("code", code);
+        params.add("client_secret", clientSecret);
+        return new HttpEntity<>(params, headers);
     }
 
     public void setRestTemplate(RestTemplate rt) {
@@ -45,14 +114,12 @@ public class OAuthService {
     }
 
     public OauthToken getAccessToken(String code, String provider) {
-        HttpEntity<MultiValueMap<String, String>> tokenRequest = getTokenRequest(code, provider);
-
-        ResponseEntity<String> tokenResponse = rt.exchange(
-                getProviderTokenUrl(provider),
-                HttpMethod.POST,
-                tokenRequest,
-                String.class
-        );
+        String tokenResponse = webClient.post()
+                .uri(getProviderTokenUrl(provider))
+                .bodyValue(getTokenRequest(code, provider))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
 
         return getOAuthToken(provider, tokenResponse);
     }
@@ -131,74 +198,6 @@ public class OAuthService {
                 .withClaim("id", user.getId())
                 .withClaim("nickname", user.getNickname())
                 .sign(Algorithm.HMAC512(JwtProperties.SECRET));
-    }
-
-    private static OauthToken getOAuthToken(String provider, ResponseEntity<String> tokenResponse) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        OauthToken oauthToken;
-        try {
-            if (provider.equals("git")) {
-                // git은 body가 문자열 형식
-                String responseBody = tokenResponse.getBody();
-                // 문자열 파싱하여 Map 객체 생성
-                Map<String, String> map = new HashMap<>();
-                String[] pairs = Objects.requireNonNull(responseBody).split("&");
-                Arrays.stream(pairs).map(pair -> pair.split("=", 2)).forEach(tokens -> {
-                    String key = tokens[0];
-                    String value = tokens[1];
-                    map.put(key, value);
-                });
-                // Map 객체를 JSON 형태로 변환
-                ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writeValueAsString(map);
-
-                oauthToken = objectMapper.readValue(json, OauthToken.class);
-            } else {
-                oauthToken = objectMapper.readValue(tokenResponse.getBody(), OauthToken.class);
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Json Parsing Error", e);
-        }
-        return oauthToken;
-    }
-
-    private static HttpEntity<MultiValueMap<String, String>> getTokenRequest(String code, String provider) {
-        String grantType;
-        String clientId;
-        String clientSecret;
-        String redirectUri;
-
-        switch (provider) {
-            case "kakao" -> {
-                grantType = "authorization_code";
-                clientId = "4646a32b25c060e42407ceb8c13ef14a";
-                clientSecret = "AWyAH1M24R9EYfUjJ1KCxcsh3DwvK8F7";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/kakao";
-            }
-            case "google" -> {
-                grantType = "authorization_code";
-                clientId = "278703087355-limdvm0almc07ldn934on122iorpfdv5.apps.googleusercontent.com";
-                clientSecret = "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";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/google";
-            }
-            default -> {
-                grantType = "authorization_code";
-                clientId = "Iv1.986aaa4d78140fb7";
-                clientSecret = "0c8e730012e8ca8e41a3922358572457f5cc57e4";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/git";
-            }
-        }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", grantType);
-        params.add("client_id", clientId);
-        params.add("redirect_uri", redirectUri);
-        params.add("code", code);
-        params.add("client_secret", clientSecret);
-        return new HttpEntity<>(params, headers);
     }
 
     //provider에 따라 URL 제공 구분

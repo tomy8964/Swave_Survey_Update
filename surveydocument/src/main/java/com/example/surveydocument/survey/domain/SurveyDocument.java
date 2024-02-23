@@ -35,8 +35,9 @@ public class SurveyDocument {
     @Column(name = "accept_response")
     private boolean acceptResponse;
 
+    @Builder.Default
     @Column(name = "answer_count")
-    private int countAnswer;
+    private int countAnswer = 0;
 
     @Builder.Default
     @Column(name = "is_deleted")
@@ -69,7 +70,7 @@ public class SurveyDocument {
         this.countAnswer++;
     }
 
-    public void updateSurvey(SurveyRequestDto requestDto) {
+    public Long updateSurvey(SurveyRequestDto requestDto) {
         this.title = requestDto.getTitle();
         this.description = requestDto.getDescription();
         this.type = requestDto.getType();
@@ -96,5 +97,6 @@ public class SurveyDocument {
                         .build();
             }
         }
+        return this.id;
     }
 }

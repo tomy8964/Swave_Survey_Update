@@ -2,6 +2,6 @@ package com.example.surveydocument.survey.exception;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {
-        super(message);
+        super("존재하지 않는 " + message + "입니다.");
     }
 }

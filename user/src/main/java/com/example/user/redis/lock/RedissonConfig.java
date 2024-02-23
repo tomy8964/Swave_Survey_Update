@@ -26,13 +26,6 @@ public class RedissonConfig {
     private static final String REDISSON_HOST_PREFIX = "redis://";
 
     @Bean
-    public RedissonClient redissonClient() {
-        Config config = new Config();
-        config.useSingleServer().setAddress(REDISSON_HOST_PREFIX + redisHost + ":" + redisPort);
-        return Redisson.create(config);
-    }
-
-    @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(redisHost, redisPort);
     }

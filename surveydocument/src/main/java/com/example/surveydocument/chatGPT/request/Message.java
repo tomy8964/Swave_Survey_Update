@@ -21,6 +21,4 @@ public class Message implements Serializable {
         this.role=role;
         this.content=content;
     }
-
-
 }

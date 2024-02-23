@@ -1,7 +1,6 @@
 package com.example.surveydocument.survey.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +20,9 @@ public class Choice {
     private Long id;
     @Column(name = "choice_title")
     private String title;
+    @Builder.Default
     @Column(name = "choice_count")
-    private int count;
+    private int count = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id")
@@ -32,12 +32,7 @@ public class Choice {
     @Column(name = "is_deleted")
     private boolean isDeleted = Boolean.FALSE;
 
-    public void addCount() {
-        System.out.println("id = " + id);
-        this.count++;
-    }
-
-    public Choice(Long id, String title, int count, QuestionDocument questionDocument, boolean isDeleted ) {
+    public Choice(Long id, String title, int count, QuestionDocument questionDocument, boolean isDeleted) {
         this.id = id;
         this.title = title;
         this.count = count;
@@ -46,5 +41,9 @@ public class Choice {
             questionDocument.getChoiceList().add(this);
         }
         this.isDeleted = isDeleted;
+    }
+
+    public void addCount() {
+        this.count++;
     }
 }

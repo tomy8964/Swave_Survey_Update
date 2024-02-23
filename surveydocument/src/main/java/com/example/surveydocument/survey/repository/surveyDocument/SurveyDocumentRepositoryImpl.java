@@ -57,43 +57,47 @@ public class SurveyDocumentRepositoryImpl implements SurveyDocumentRepositoryCus
 
     @Override
     public Optional<SurveyDocument> findSurveyById(Long surveyDocumentId) {
-        return Optional.ofNullable(queryFactory
-                .selectFrom(surveyDocument)
-                .leftJoin(surveyDocument.design, design).fetchJoin()
-                .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
-                .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
-                .where(surveyDocument.id.eq(surveyDocumentId))
-                .distinct()
-                .fetchOne());
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(surveyDocument)
+                        .leftJoin(surveyDocument.design, design).fetchJoin()
+                        .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
+                        .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
+                        .where(surveyDocument.id.eq(surveyDocumentId))
+                        .distinct()
+                        .fetchOne());
     }
 
     @Override
-    public ManagementResponseDto findManageById(Long surveyDocumentId) {
-        return queryFactory.select(new QManagementResponseDto(dateManagement.startDate, dateManagement.deadline, dateManagement.isEnabled))
-                .from(dateManagement)
-                .where(dateManagement.surveyDocument.id.eq(surveyDocumentId))
-                .fetchOne();
+    public Optional<ManagementResponseDto> findManageById(Long surveyDocumentId) {
+        return Optional.ofNullable(
+                queryFactory.select(new QManagementResponseDto(dateManagement.startDate, dateManagement.deadline, dateManagement.isEnabled))
+                        .from(dateManagement)
+                        .where(dateManagement.surveyDocument.id.eq(surveyDocumentId))
+                        .fetchOne());
     }
 
     @Override
     public Optional<SurveyDocument> findByIdToUpdate(Long surveyDocumentId) {
-        return Optional.ofNullable(queryFactory
-                .selectFrom(surveyDocument)
-                .leftJoin(surveyDocument.design, design).fetchJoin()
-                .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
-                .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
-                .where(surveyDocument.id.eq(surveyDocumentId))
-                .distinct()
-                .fetchOne());
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(surveyDocument)
+                        .leftJoin(surveyDocument.design, design).fetchJoin()
+                        .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
+                        .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
+                        .where(surveyDocument.id.eq(surveyDocumentId))
+                        .distinct()
+                        .fetchOne());
     }
 
     @Override
     @Transactional
-    public void updateManage(Long id, Boolean enable) {
+    public Boolean updateManage(Long id, Boolean enable) {
         queryFactory.update(dateManagement)
                 .where(dateManagement.surveyDocument.id.eq(id))
                 .set(dateManagement.isEnabled, enable)
                 .execute();
+        return enable;
     }
 
     private OrderSpecifier<?> getOrder(String sortWhat, String sortHow) {

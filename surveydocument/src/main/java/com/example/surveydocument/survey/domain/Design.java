@@ -20,7 +20,8 @@ public class Design {
     private SurveyDocument surveyDocument;
 
     @Builder
-    public Design(String font, int fontSize, String backColor, SurveyDocument surveyDocument) {
+    public Design(Long id, String font, int fontSize, String backColor, SurveyDocument surveyDocument) {
+        this.id = id;
         this.font = font;
         this.fontSize = fontSize;
         this.backColor = backColor;

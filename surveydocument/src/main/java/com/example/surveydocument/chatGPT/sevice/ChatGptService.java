@@ -14,10 +14,15 @@ import java.util.Collections;
 @Service
 public class ChatGptService {
 
-    private final WebClient webClient;
+    private WebClient webClient;
 
     public ChatGptService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.baseUrl(ChatGptConfig.URL).build();
+    }
+
+    // 테스트를 위한 메서드
+    void setWebClient(WebClient webClient) {
+        this.webClient = webClient;
     }
 
     private Mono<ChatGptResponseDto> getResponse(ChatGptRequestDto requestDto) {

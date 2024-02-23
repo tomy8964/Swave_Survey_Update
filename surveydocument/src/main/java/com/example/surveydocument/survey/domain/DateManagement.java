@@ -14,7 +14,7 @@ public class DateManagement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "date_id")
-    private long id;
+    private Long id;
 
     @Column(name = "survey_start_date")
     private Date startDate;
@@ -29,7 +29,8 @@ public class DateManagement {
     private SurveyDocument surveyDocument;
 
     @Builder
-    public DateManagement(Date startDate, Date deadline, Boolean isEnabled, SurveyDocument surveyDocument) {
+    public DateManagement(Long id, Date startDate, Date deadline, Boolean isEnabled, SurveyDocument surveyDocument) {
+        this.id = id;
         this.startDate = startDate;
         this.deadline = deadline;
         this.isEnabled = isEnabled;
@@ -37,9 +38,5 @@ public class DateManagement {
             this.surveyDocument = surveyDocument;
             surveyDocument.setDate(this);
         }
-    }
-
-    public void setIsEnabled(Boolean enable) {
-        this.isEnabled = enable;
     }
 }

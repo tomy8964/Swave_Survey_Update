@@ -8,6 +8,8 @@ import com.example.surveydocument.survey.service.SurveyDocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -22,8 +24,8 @@ public class SurveyDocumentInternalController {
 
     @GetMapping(value = "/getSurveyDocumentToAnswer/{id}")
     @Cacheable(value = "survey", key = "'survey-' + #id", cacheManager = "cacheManager")
-    public SurveyDetailDto readDetail1(@PathVariable Long id) {
-        return surveyService.readSurveyDetail(id);
+    public ResponseEntity<SurveyDetailDto> readDetail1(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.readSurveyDetail(id), HttpStatus.OK);
     }
 
     @GetMapping(value = "/getSurveyDocumentToAnalyze/{id}")
@@ -33,32 +35,32 @@ public class SurveyDocumentInternalController {
     }
 
     @PostMapping(value = "/count/{id}")
-    public void countChoice(@PathVariable Long id) {
-        surveyService.countChoice(id);
+    public ResponseEntity<Long> countChoice(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.countChoice(id), HttpStatus.NO_CONTENT);
     }
 
     // Survey Document 응답자 ++
-    @PostMapping(value = "/countAnswer/{id}")
-    public void countAnswer(@PathVariable Long id) {
-        surveyService.countSurveyDocument(id);
+    @PostMapping(value = "/countAnswer/{surveyDocumentId}")
+    public ResponseEntity<Long> countAnswer(@PathVariable Long surveyDocumentId) {
+        return new ResponseEntity<>(surveyService.countSurveyDocument(surveyDocumentId), HttpStatus.NO_CONTENT);
     }
 
     @GetMapping(value = "/getChoice/{id}")
     @Cacheable(value = "choice", key = "'choice-' + #id", cacheManager = "cacheManager")
-    public ChoiceDetailDto getChoice(@PathVariable Long id) {
-        return surveyService.getChoice(id);
+    public ResponseEntity<ChoiceDetailDto> getChoice(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.getChoice(id), HttpStatus.OK);
     }
 
     @GetMapping(value = "/getQuestion/{id}")
     @Cacheable(value = "question", key = "'question-' + #id", cacheManager = "cacheManager")
-    public QuestionDetailDto getQuestion(@PathVariable Long id) {
-        return surveyService.getQuestion(id);
+    public ResponseEntity<QuestionDetailDto> getQuestion(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.getQuestion(id), HttpStatus.OK);
     }
 
     @GetMapping(value = "/getQuestionByChoiceId/{id}")
     @Cacheable(value = "getQuestionByChoiceId", key = "'choiceByquestion-' + #id", cacheManager = "cacheManager")
-    public QuestionDetailDto getQuestionByChoiceId(@PathVariable Long id) {
-        return surveyService.getQuestionByChoiceId(id);
+    public ResponseEntity<QuestionDetailDto> getQuestionByChoiceId(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.getQuestionByChoiceId(id), HttpStatus.OK);
     }
 
 }

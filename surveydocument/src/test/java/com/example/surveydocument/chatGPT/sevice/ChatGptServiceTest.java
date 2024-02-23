@@ -1,116 +1,92 @@
 package com.example.surveydocument.chatGPT.sevice;
 
-import com.example.surveydocument.chatGPT.config.ChatGptConfig;
 import com.example.surveydocument.chatGPT.request.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.*;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Transactional
-@SpringBootTest
-@AutoConfigureMockMvc
 public class ChatGptServiceTest {
 
-    @Autowired
-    /*
-      웹 API 테스트할 때 사용
-      스프링 MVC 테스트의 시작점
-      HTTP GET,POST 등에 대해 API 테스트 가능
-      */
-    MockMvc mockMvc;
-    @Mock
-    private RestTemplate restTemplate;
-
-    @MockBean
+    private static MockWebServer mockBackEnd;
+    private ObjectMapper mapper = new ObjectMapper();
     private ChatGptService chatGptService;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        chatGptService = new ChatGptService(restTemplate);
+    void setUp() throws IOException {
+        mockBackEnd = new MockWebServer();
+        mockBackEnd.start();
+
+        String baseUrl = String.format("http://localhost:%s", mockBackEnd.getPort());
+        WebClient webClient = WebClient.builder().baseUrl(baseUrl).build();
+        chatGptService = new ChatGptService(WebClient.builder());
+        chatGptService.setWebClient(webClient);  // WebClient 설정
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        mockBackEnd.shutdown();
     }
 
     @Test
-    @Transactional
-    public void testAskQuestion() {
-        // Create a sample ChatGptRequestDto
-        ChatGptQuestionRequestDto requestDto = new ChatGptQuestionRequestDto();
-        requestDto.setQuestion("question");
+    @DisplayName("ChatGPT 질문 후 응답 리스트 변환 테스트")
+    void chatGptResult() throws Exception {
+        // given
+        ChatGptQuestionRequestDto chatGptQuestionRequestDto = new ChatGptQuestionRequestDto();
+        chatGptQuestionRequestDto.setQuestion("ChatGPT 질문입니다.");
+        List<ChatGptChoice> choiceList = new ArrayList<>();
+        ChatGptChoice choice1 = ChatGptChoice.builder()
+                .index(1)
+                .message(new Message("role","content1"))
+                .finishReason("종료 이유입니다.")
+                .build();
+        ChatGptChoice choice2 = ChatGptChoice.builder()
+                .index(2)
+                .message(new Message("role","content2"))
+                .finishReason("종료 이유입니다.")
+                .build();
+        choiceList.add(choice1);
+        choiceList.add(choice2);
 
-        Message role1 = new Message("role", "0 content");
-        ChatGptChoice finishReason1 = new ChatGptChoice(0, role1, "finish_reason");
+        ChatGptResponseDto chatGptResponseDto = ChatGptResponseDto.builder()
+                .choices(choiceList)
+                .build();
 
-        Message role2 = new Message("role", "1 content");
-        ChatGptChoice finishReason2 = new ChatGptChoice(1, role2, "finish_reason");
-        List<ChatGptChoice> list = new ArrayList<>();
-        list.add(finishReason1);
-        list.add(finishReason2);
-        ChatGptResponseDto chatGptResponseDto = new ChatGptResponseDto(list);
+        ChatResultDto expectedResponse = ChatResultDto.builder()
+                .index(1)
+                .text("ChatGPT 답변입니다.")
+                .finishReason("종료 이유입니다.")
+                .build();
 
-        ResponseEntity<ChatGptResponseDto> mockResponseEntity = new ResponseEntity<>(chatGptResponseDto, HttpStatus.OK);
-        System.out.println("mockResponseEntity.getBody() = " + mockResponseEntity.getBody());
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(mapper.writeValueAsString(chatGptResponseDto))
+                .addHeader("Content-Type", "application/json"));
 
-        // Mock the restTemplate.postForEntity method to return the mockResponseEntity
-        when(restTemplate.postForEntity(eq(ChatGptConfig.URL), any(HttpEntity.class), eq(ChatGptResponseDto.class)))
-                .thenReturn(mockResponseEntity);
+        // when
+        Mono<ChatResultDto> actualResponseMono = chatGptService.chatGptResult(chatGptQuestionRequestDto);
 
-        // Call the method you want to test
-        ChatResultDto chatResultDto = chatGptService.chatGptResult(requestDto);
-        System.out.println("result = " + chatResultDto);
+        // then
+        ChatResultDto actualResponse = actualResponseMono.block();
+        assertEquals(choice1.getIndex(), actualResponse.getIndex());
+        assertEquals(choice1.getMessage().getContent(), actualResponse.getText());
+        assertEquals(choice1.getFinishReason(), actualResponse.getFinishReason());
+
+
+        RecordedRequest recordedRequest = mockBackEnd.takeRequest();
+        assertEquals("POST", recordedRequest.getMethod());
     }
-
-    @Test
-    @Transactional
-    public void testAskQuestion2() throws Exception {
-        // Create a sample ChatGptRequestDto
-        ChatGptQuestionRequestDto requestDto = new ChatGptQuestionRequestDto();
-        requestDto.setQuestion("question");
-
-        Message role1 = new Message("role", "0 content");
-        ChatGptChoice finishReason1 = new ChatGptChoice(0, role1, "finish_reason");
-
-        Message role2 = new Message("role", "1 content");
-        ChatGptChoice finishReason2 = new ChatGptChoice(1, role2, "finish_reason");
-        List<ChatGptChoice> list = new ArrayList<>();
-        list.add(finishReason1);
-        list.add(finishReason2);
-        ChatGptResponseDto chatGptResponseDto = new ChatGptResponseDto(list);
-
-        ResponseEntity<ChatGptResponseDto> mockResponseEntity = new ResponseEntity<>(chatGptResponseDto, HttpStatus.OK);
-        System.out.println("mockResponseEntity.getBody() = " + mockResponseEntity.getBody());
-
-        // Mock the restTemplate.postForEntity method to return the mockResponseEntity
-        when(restTemplate.postForEntity(eq(ChatGptConfig.URL), any(HttpEntity.class), eq(ChatGptResponseDto.class)))
-                .thenReturn(mockResponseEntity);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String request = mapper.writeValueAsString(requestDto);
-        MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.post("/api/document/external/chat-gpt/question")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andReturn();
-        System.out.println("mvcResult = " + mvcResult);
-    }
-
 }

@@ -13,22 +13,24 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class RestApiService {
 
+    private static String userInternalUrl = "/api/user/internal";
+    private WebClient webClient;
     @Value("${gateway.host}")
     private String gateway;
-    private static String userInternalUrl = "/api/user/internal";
 
-    public WebClient webClient = WebClient.create();
+    public RestApiService(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl(gateway).build();
+    }
 
-    public void setGateway(String baseUrl) {
-        this.gateway = baseUrl;
-        this.webClient = WebClient.create(gateway);
+    // 테스트를 위한 메서드
+    void setWebClient(WebClient webClient) {
+        this.webClient = webClient;
     }
 
     // Current User 정보 가져오기
@@ -38,7 +40,7 @@ public class RestApiService {
         log.info("현재 유저정보를 가져옵니다");
 
         // Current User URL
-        String getCurrentUserUrl = "http://" + gateway + userInternalUrl + "/me";
+        String getCurrentUserUrl = userInternalUrl + "/me";
 
         Long userId = webClient.get()
                 .uri(getCurrentUserUrl)
@@ -55,16 +57,16 @@ public class RestApiService {
     }
 
     // Answer Id 값을 통해 Question Answer 불러오기
-    public Optional<List<QuestionAnswerDto>> getQuestionAnswersByCheckAnswerId(Long id) {
+    public List<QuestionAnswerDto> getQuestionAnswersByCheckAnswerId(Long id) {
         //REST API로 분석 시작 컨트롤러로 전달
         // Create a WebClient instance
         log.info("GET questionAnswer List by checkAnswerId");
 
         // Define the API URL
-        String apiUrl = "http://"+ gateway +"/api/answer/internal/getQuestionAnswerByCheckAnswerId/"+ id;
+        String apiUrl = "/api/answer/internal/getQuestionAnswerByCheckAnswerId/" + id;
 
         // Make a GET request to the API and retrieve the response
-        Optional<List<QuestionAnswerDto>> questionAnswerList = webClient.get()
+        List<QuestionAnswerDto> questionAnswerList = webClient.get()
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
@@ -72,12 +74,13 @@ public class RestApiService {
                 .map(responseBody -> {
                     ObjectMapper mapper = new ObjectMapper();
                     try {
-                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {});
+                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {
+                        });
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        throw new RuntimeException("응답을 QuestionAnswerDto로 변환하는 데 실패했습니다.", e);
                     }
                 })
-                .blockOptional();
+                .block();
 
         // Process the response as needed
         System.out.println("Request: " + questionAnswerList);

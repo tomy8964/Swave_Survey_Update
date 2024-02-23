@@ -58,7 +58,15 @@ dependencies {
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-    testImplementation project(path: ':')
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.12.0"
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation ('it.ozimov:embedded-redis:0.7.3') { exclude group: "org.slf4j", module: "slf4j-simple" } // 임베비드 레디스 추가
+
+
+    // mock server
+    testImplementation 'org.mock-server:mockserver-netty:5.12.0'
+    testImplementation 'org.mock-server:mockserver-client-java:5.12.0'
 
     //monitoring
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'

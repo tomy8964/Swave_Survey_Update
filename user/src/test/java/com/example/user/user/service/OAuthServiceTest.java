@@ -30,23 +30,13 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 public class OAuthServiceTest {
 
+    private static final String getMockGitProfile1 = "{\"login\": \"sampleName\", \"avatar_url\": \"samplePicture\"}";
     @InjectMocks
     private OAuthService oAuthService;
     @Autowired
     private UserRepository userRepository;
     @Mock
-    private OuterRestApiUserService apiUserService;
-    @Mock
     private RestTemplate rt;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this); // Initialize mocks
-
-        // Create an instance of OAuthService with mocked dependencies
-        oAuthService = new OAuthService(userRepository, apiUserService);
-        oAuthService.setRestTemplate(rt); // Inject the mocked RestTemplate
-    }
 
     private static String getMockKakaoProfile() {
         return "{"
@@ -85,9 +75,6 @@ public class OAuthServiceTest {
                 + "}";
     }
 
-    private static final String getMockGitProfile1 = "{\"login\": \"sampleName\", \"avatar_url\": \"samplePicture\"}";
-
-
     private static String getMockGitProfile2() {
         return """
                 [
@@ -105,7 +92,16 @@ public class OAuthServiceTest {
                   }
                 ]""";
     }
-    
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this); // Initialize mocks
+
+        // Create an instance of OAuthService with mocked dependencies
+        oAuthService = new OAuthService(userRepository);
+        oAuthService.setRestTemplate(rt); // Inject the mocked RestTemplate
+    }
+
     @Test
     @DisplayName("JSON PARSING ERROR1")
     public void JSON_PARSING_ERROR1() {
@@ -136,7 +132,7 @@ public class OAuthServiceTest {
     public void Invalid_Provider_ERROR1() {
         assertThrows(RuntimeException.class, () -> oAuthService.saveUser("code", "invalid provider"));
     }
-    
+
 
     @Test
     @DisplayName("OAuth 서버 mock -> getAccessToken 테스트")
@@ -270,7 +266,7 @@ public class OAuthServiceTest {
         assertThat(findUser.getUserRole()).isEqualTo(UserRole.USER);
         assertThat(findUser.getDescription()).isEqualTo("joinByGoogle");
     }
-    
+
     @Test
     @DisplayName("깃 새로운 유저 가입")
     void saveNewUserGit() {
