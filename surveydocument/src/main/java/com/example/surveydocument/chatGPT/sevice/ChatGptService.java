@@ -3,6 +3,7 @@ package com.example.surveydocument.chatGPT.sevice;
 
 import com.example.surveydocument.chatGPT.config.ChatGptConfig;
 import com.example.surveydocument.chatGPT.request.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -12,18 +13,10 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 
 @Service
+@RequiredArgsConstructor
 public class ChatGptService {
 
-    private WebClient webClient;
-
-    public ChatGptService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(ChatGptConfig.URL).build();
-    }
-
-    // 테스트를 위한 메서드
-    void setWebClient(WebClient webClient) {
-        this.webClient = webClient;
-    }
+    private final WebClient webClient;
 
     private Mono<ChatGptResponseDto> getResponse(ChatGptRequestDto requestDto) {
         return webClient.post()

@@ -7,31 +7,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class RestApiService {
 
-    private static String userInternalUrl = "/api/user/internal";
-    private WebClient webClient;
-    @Value("${gateway.host}")
-    private String gateway;
-
-    public RestApiService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(gateway).build();
-    }
-
-    // 테스트를 위한 메서드
-    void setWebClient(WebClient webClient) {
-        this.webClient = webClient;
-    }
+    private final static String userInternalUrl = "api/user/internal";
+    private final WebClient webClient;
 
     // Current User 정보 가져오기
     public Optional<Long> getCurrentUserFromJWTToken(HttpServletRequest request) {
@@ -43,7 +31,7 @@ public class RestApiService {
         String getCurrentUserUrl = userInternalUrl + "/me";
 
         Long userId = webClient.get()
-                .uri(getCurrentUserUrl)
+                .uri(uriBuilder -> uriBuilder.path(getCurrentUserUrl).build())
                 .header("Authorization", jwtHeader)
                 .retrieve()
                 .bodyToMono(Long.class)

@@ -3,16 +3,25 @@ package com.example.surveydocument.restAPI;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 
+@Slf4j
+@Profile({"local", "server"})
 @Configuration
 public class WebClientConfig {
+    @Value("${gateway.host}")
+    private String gateway;
     private final ObjectMapper objectMapper;
 
     public WebClientConfig() {
@@ -33,7 +42,17 @@ public class WebClientConfig {
                 .build();
 
         return WebClient.builder()
+                .baseUrl(gateway)
                 .exchangeStrategies(exchangeStrategies)
+                .filter(logRequest())
                 .build();
+    }
+
+    public static ExchangeFilterFunction logRequest() {
+        return (clientRequest, next) -> {
+            log.info("Request: {} {}", clientRequest.method(), clientRequest.url());
+            clientRequest.headers().forEach((name, values) -> values.forEach(value -> log.info("{}={}", name, value)));
+            return next.exchange(clientRequest);
+        };
     }
 }

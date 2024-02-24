@@ -1,5 +1,6 @@
 package com.example.surveydocument.restAPI.service;
 
+import com.example.surveydocument.restAPI.WebClientConfig;
 import com.example.surveydocument.survey.response.QuestionAnswerDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,8 +11,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
@@ -24,10 +31,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public class RestApiServiceTest {
 
     private static MockWebServer mockBackEnd;
     private ObjectMapper mapper = new ObjectMapper();
+    @Autowired
     private RestApiService restApiService;
 
     @BeforeEach
@@ -36,9 +46,11 @@ public class RestApiServiceTest {
         mockBackEnd.start();
 
         String baseUrl = String.format("http://localhost:%s", mockBackEnd.getPort());
-        WebClient webClient = WebClient.builder().baseUrl(baseUrl).build();
-        restApiService = new RestApiService(WebClient.builder());
-        restApiService.setWebClient(webClient);  // WebClient 설정
+        WebClient webClient = WebClient.builder()
+                .baseUrl(baseUrl)
+                .filter(WebClientConfig.logRequest())
+                .build();
+        restApiService = new RestApiService(webClient);
     }
 
     @AfterEach

@@ -1,6 +1,7 @@
 package com.example.surveydocument.chatGPT.sevice;
 
 import com.example.surveydocument.chatGPT.request.*;
+import com.example.surveydocument.restAPI.WebClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -9,8 +10,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -20,10 +22,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public class ChatGptServiceTest {
 
     private static MockWebServer mockBackEnd;
     private ObjectMapper mapper = new ObjectMapper();
+    @Autowired
     private ChatGptService chatGptService;
 
     @BeforeEach
@@ -32,9 +37,11 @@ public class ChatGptServiceTest {
         mockBackEnd.start();
 
         String baseUrl = String.format("http://localhost:%s", mockBackEnd.getPort());
-        WebClient webClient = WebClient.builder().baseUrl(baseUrl).build();
-        chatGptService = new ChatGptService(WebClient.builder());
-        chatGptService.setWebClient(webClient);  // WebClient 설정
+        WebClient webClient = WebClient.builder()
+                .baseUrl(baseUrl)
+                .filter(WebClientConfig.logRequest())
+                .build();
+        chatGptService = new ChatGptService(webClient);
     }
 
     @AfterEach
@@ -51,12 +58,12 @@ public class ChatGptServiceTest {
         List<ChatGptChoice> choiceList = new ArrayList<>();
         ChatGptChoice choice1 = ChatGptChoice.builder()
                 .index(1)
-                .message(new Message("role","content1"))
+                .message(new Message("role", "content1"))
                 .finishReason("종료 이유입니다.")
                 .build();
         ChatGptChoice choice2 = ChatGptChoice.builder()
                 .index(2)
-                .message(new Message("role","content2"))
+                .message(new Message("role", "content2"))
                 .finishReason("종료 이유입니다.")
                 .build();
         choiceList.add(choice1);
