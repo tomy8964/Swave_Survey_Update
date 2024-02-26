@@ -132,6 +132,23 @@ public class SurveyDocumentServiceTest {
         return surveyDocument;
     }
 
+    public static PageRequestDto createPageRequestDto() {
+        return new PageRequestDto("grid", 0, "date", "ascending");
+    }
+
+    public static Page<SurveyPageDto> createExpectedPage() {
+        List<SurveyPageDto> content = new ArrayList<>();
+
+        // 총 11개(1일부터 11일까지)의 설문 리스트 생성
+        for (int number = 1; number < 11; number++) {
+            SurveyPageDto surveyPageDto = new SurveyPageDto("test" + number,
+                    new Date());
+            content.add(surveyPageDto);
+        }
+
+        return new PageImpl<>(content, PageRequest.of(0, 10), content.size());
+    }
+
     @Test
     @DisplayName("설문 생성 성공")
     public void createSurveySuccess() {
@@ -756,22 +773,5 @@ public class SurveyDocumentServiceTest {
 
         // when & then
         assertThrows(NotFoundException.class, () -> surveyDocumentService.readSurveyDetail2(surveyDocumentId));
-    }
-
-    private PageRequestDto createPageRequestDto() {
-        return new PageRequestDto("grid", 0, "date", "ascending");
-    }
-
-    private Page<SurveyPageDto> createExpectedPage() {
-        List<SurveyPageDto> content = new ArrayList<>();
-
-        // 총 11개(1일부터 11일까지)의 설문 리스트 생성
-        for (int number = 1; number < 11; number++) {
-            SurveyPageDto surveyPageDto = new SurveyPageDto("test" + number,
-                    new Date());
-            content.add(surveyPageDto);
-        }
-
-        return new PageImpl<>(content, PageRequest.of(0, 10), content.size());
     }
 }

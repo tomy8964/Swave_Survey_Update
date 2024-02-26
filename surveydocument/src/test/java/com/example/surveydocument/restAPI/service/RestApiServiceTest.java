@@ -36,7 +36,8 @@ import static org.mockito.Mockito.when;
 public class RestApiServiceTest {
 
     private static MockWebServer mockBackEnd;
-    private ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper mapper;
     @Autowired
     private RestApiService restApiService;
 
@@ -50,7 +51,7 @@ public class RestApiServiceTest {
                 .baseUrl(baseUrl)
                 .filter(WebClientConfig.logRequest())
                 .build();
-        restApiService = new RestApiService(webClient);
+        restApiService = new RestApiService(webClient, mapper);
     }
 
     @AfterEach

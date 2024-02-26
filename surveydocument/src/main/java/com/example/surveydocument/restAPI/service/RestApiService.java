@@ -1,5 +1,6 @@
 package com.example.surveydocument.restAPI.service;
 
+import com.example.surveydocument.survey.exception.InterServerException;
 import com.example.surveydocument.survey.response.QuestionAnswerDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -20,6 +21,7 @@ public class RestApiService {
 
     private final static String userInternalUrl = "api/user/internal";
     private final WebClient webClient;
+    private final ObjectMapper mapper;
 
     // Current User 정보 가져오기
     public Optional<Long> getCurrentUserFromJWTToken(HttpServletRequest request) {
@@ -60,12 +62,11 @@ public class RestApiService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .map(responseBody -> {
-                    ObjectMapper mapper = new ObjectMapper();
                     try {
                         return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {
                         });
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException("응답을 QuestionAnswerDto로 변환하는 데 실패했습니다.", e);
+                    } catch (Exception e) {
+                        throw new InterServerException(e);
                     }
                 })
                 .block();

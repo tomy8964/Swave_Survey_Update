@@ -30,8 +30,8 @@ public class SurveyDocumentInternalController {
 
     @GetMapping(value = "/getSurveyDocumentToAnalyze/{id}")
     @Cacheable(value = "survey2", key = "'survey2-' + #id", cacheManager = "cacheManager")
-    public SurveyDetailDto2 readDetail2(@PathVariable Long id) {
-        return surveyService.readSurveyDetail2(id);
+    public ResponseEntity<SurveyDetailDto2> readDetail2(@PathVariable Long id) {
+        return new ResponseEntity<>(surveyService.readSurveyDetail2(id), HttpStatus.OK);
     }
 
     @PostMapping(value = "/count/{id}")

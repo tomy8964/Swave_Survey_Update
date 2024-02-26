@@ -221,7 +221,7 @@ public class SurveyDocumentService {
     public QuestionDetailDto getQuestionByChoiceId(Long choiceId) {
         return getQuestionDto(
                 choiceRepository.findById(choiceId)
-                        .orElseThrow(() -> new NotFoundException("선택지"))
+                        .orElseThrow(() -> new NotFoundException("문항"))
                         .getQuestionDocument());
     }
 
