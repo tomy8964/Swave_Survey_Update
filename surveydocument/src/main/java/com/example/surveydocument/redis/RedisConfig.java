@@ -1,5 +1,6 @@
 package com.example.surveydocument.redis;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -16,11 +17,12 @@ import java.time.Duration;
 
 @Configuration
 @Profile({"local", "server"})
+@RequiredArgsConstructor
 public class RedisConfig {
     @Value("${spring.cache.redis.host}")
-    private String redisHost;
+    private final String redisHost;
     @Value("${spring.cache.redis.port}")
-    private String redisPort;
+    private final String redisPort;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
