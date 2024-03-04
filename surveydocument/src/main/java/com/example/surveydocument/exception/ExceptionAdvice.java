@@ -1,4 +1,4 @@
-package com.example.surveydocument.survey.exception;
+package com.example.surveydocument.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,10 +20,5 @@ public class ExceptionAdvice {
     public ResponseEntity<?> invalidUserException(InvalidUserException e) {
         log.error("Error occurs {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-    }
-    @ExceptionHandler(InterServerException.class)
-    public ResponseEntity<?> interServerException(InterServerException e) {
-        log.error("Error occurs {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
     }
 }

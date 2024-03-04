@@ -252,34 +252,6 @@ public class SurveyDocumentIntegrationTest {
 
     @Test
     @Transactional
-    @DisplayName("설문 조회 실패 - 설문 응답 통신 오류")
-    public void readSurveyFail2() throws Exception {
-        // given
-        Long userId = 1L;
-        SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
-        mockBackEnd.enqueue(createMockResponse(userId));
-        MvcResult createResult = mockMvc.perform(post("/api/document/external/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(surveyRequestDto))
-                )
-                .andExpect(status().isCreated())
-                .andReturn();
-        String createdSurveyID = createResult.getResponse().getContentAsString();
-
-        // 올바르지 않은 설문 서비스의 응답
-        mockBackEnd.enqueue(createMockResponse(new SurveyDetailDto()));
-
-        // when
-        MvcResult mvcResult = mockMvc.perform(get("/api/document/external/survey-list/" + createdSurveyID))
-                .andExpect(status().isInternalServerError())
-                .andDo(print())
-                .andReturn();
-        // then
-        assertThat(mvcResult.getResponse().getContentAsString(), containsString("내부 통신 오류입니다."));
-    }
-
-    @Test
-    @Transactional
     @DisplayName("설문 수정 성공")
     public void updateSurveySuccess() throws Exception {
         // given
@@ -772,34 +744,6 @@ public class SurveyDocumentIntegrationTest {
 
     @Test
     @Transactional
-    @DisplayName("응답 서비스에서 설문 조회 실패 - 설문 응답 통신 오류")
-    public void readSurvey1Fail2() throws Exception {
-        // given
-        Long userId = 1L;
-        SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
-        mockBackEnd.enqueue(createMockResponse(userId));
-        MvcResult createResult = mockMvc.perform(post("/api/document/external/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(surveyRequestDto))
-                )
-                .andExpect(status().isCreated())
-                .andReturn();
-        String createdSurveyID = createResult.getResponse().getContentAsString();
-
-        // 올바르지 않은 설문 서비스의 응답
-        mockBackEnd.enqueue(createMockResponse(new SurveyDetailDto()));
-
-        // when
-        MvcResult mvcResult = mockMvc.perform(get("/api/document/internal/getSurveyDocumentToAnswer/" + createdSurveyID))
-                .andExpect(status().isInternalServerError())
-                .andDo(print())
-                .andReturn();
-        // then
-        assertThat(mvcResult.getResponse().getContentAsString(), containsString("내부 통신 오류입니다."));
-    }
-
-    @Test
-    @Transactional
     @DisplayName("분석 서비스에서 설문 조회 성공")
     public void readSurvey2Success() throws Exception {
         // given
@@ -852,34 +796,6 @@ public class SurveyDocumentIntegrationTest {
                 .andReturn();
         // then
         assertEquals(mvcResult.getResponse().getContentAsString(), "존재하지 않는 설문입니다.");
-    }
-
-    @Test
-    @Transactional
-    @DisplayName("분석 서비스에서 설문 조회 실패 - 설문 응답 통신 오류")
-    public void readSurvey2Fail2() throws Exception {
-        // given
-        Long userId = 1L;
-        SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
-        mockBackEnd.enqueue(createMockResponse(userId));
-        MvcResult createResult = mockMvc.perform(post("/api/document/external/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(surveyRequestDto))
-                )
-                .andExpect(status().isCreated())
-                .andReturn();
-        String createdSurveyID = createResult.getResponse().getContentAsString();
-
-        // 올바르지 않은 설문 서비스의 응답
-        mockBackEnd.enqueue(createMockResponse(new SurveyDetailDto()));
-
-        // when
-        MvcResult mvcResult = mockMvc.perform(get("/api/document/internal/getSurveyDocumentToAnalyze/" + createdSurveyID))
-                .andExpect(status().isInternalServerError())
-                .andDo(print())
-                .andReturn();
-        // then
-        assertThat(mvcResult.getResponse().getContentAsString(), containsString("내부 통신 오류입니다."));
     }
 
     @Test

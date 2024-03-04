@@ -1,4 +1,4 @@
-package com.example.surveydocument.survey.exception;
+package com.example.surveydocument.exception;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {

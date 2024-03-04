@@ -2,8 +2,8 @@ package com.example.surveydocument.survey.service;
 
 import com.example.surveydocument.restAPI.service.RestApiService;
 import com.example.surveydocument.survey.domain.*;
-import com.example.surveydocument.survey.exception.InvalidUserException;
-import com.example.surveydocument.survey.exception.NotFoundException;
+import com.example.surveydocument.exception.InvalidUserException;
+import com.example.surveydocument.exception.NotFoundException;
 import com.example.surveydocument.survey.repository.choice.ChoiceRepository;
 import com.example.surveydocument.survey.repository.date.DateRepository;
 import com.example.surveydocument.survey.repository.design.DesignRepository;

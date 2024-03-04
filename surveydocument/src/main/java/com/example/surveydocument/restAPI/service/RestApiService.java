@@ -1,13 +1,11 @@
 package com.example.surveydocument.restAPI.service;
 
-import com.example.surveydocument.survey.exception.InterServerException;
 import com.example.surveydocument.survey.response.QuestionAnswerDto;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -60,14 +58,7 @@ public class RestApiService {
                 .uri(apiUrl)
                 .header("Authorization", "NotNull")
                 .retrieve()
-                .bodyToMono(String.class)
-                .map(responseBody -> {
-                    try {
-                        return mapper.readValue(responseBody, new TypeReference<List<QuestionAnswerDto>>() {
-                        });
-                    } catch (Exception e) {
-                        throw new InterServerException(e);
-                    }
+                .bodyToMono(new ParameterizedTypeReference<List<QuestionAnswerDto>>() {
                 })
                 .block();
 

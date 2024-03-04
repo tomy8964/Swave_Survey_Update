@@ -1,8 +1,8 @@
 package com.example.surveydocument.survey.controller;
 
 import com.example.surveydocument.survey.domain.PageResponseDto;
-import com.example.surveydocument.survey.exception.InvalidUserException;
-import com.example.surveydocument.survey.exception.NotFoundException;
+import com.example.surveydocument.exception.InvalidUserException;
+import com.example.surveydocument.exception.NotFoundException;
 import com.example.surveydocument.survey.request.*;
 import com.example.surveydocument.survey.response.*;
 import com.example.surveydocument.survey.service.SurveyDocumentService;

@@ -1,4 +1,4 @@
-//package com.example.surveyanswer.restAPI;
+//package com.example.surveyanswer.web;
 //
 //import com.example.surveyanswer.survey.repository.surveyAnswer.SurveyAnswerRepository;
 //import com.example.surveyanswer.survey.service.SurveyAnswerService;

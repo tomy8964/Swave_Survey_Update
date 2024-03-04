@@ -92,7 +92,6 @@ dependencies {
 
 tasks.named('test') {
     outputs.dir snippetsDir
-    outputs.dir snippetsDir
     useJUnitPlatform()
     finalizedBy 'jacocoTestReport'
     jacoco {
@@ -123,10 +122,6 @@ jacocoTestReport {
         html.enabled true
         xml.enabled false
         csv.enabled true
-
-// 리포트의 저장 경로를 설정합니다.
-//        html.destination file("jacoco/jacocoHtml")
-//        xml.destination file("jacoco/jacoco.xml")
     }
     def Qdomains = []
 
@@ -171,15 +166,4 @@ jacocoTestCoverageVerification {
 jacoco {
     // JaCoCo 버전
     toolVersion = '0.8.8'
-
-//  테스트결과 리포트를 저장할 경로 변경
-//  default는 "$/jacoco"
-//  reportsDir = file("$buildDir/customJacocoReportDir")
 }
-
-
-
-//tasks.named('asciidoctor') {
-//    inputs.dir snippetsDir
-//    dependsOn test
-//}
