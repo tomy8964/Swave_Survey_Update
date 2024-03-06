@@ -1,10 +1,11 @@
 package com.example.user.util.oAuth;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
+@NoArgsConstructor
 public class OauthToken {
     private String access_token;
     private String token_type;
@@ -13,9 +14,7 @@ public class OauthToken {
     private String scope;
     private int refresh_token_expires_in;
 
-    public OauthToken() {
-    }
-
+    @Builder
     public OauthToken(String access_token, String token_type, String refresh_token, int expires_in, String scope, int refresh_token_expires_in) {
         this.access_token = access_token;
         this.token_type = token_type;

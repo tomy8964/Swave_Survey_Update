@@ -6,73 +6,63 @@ import com.example.user.user.domain.User;
 import com.example.user.user.exception.UserNotFoundException;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.user.request.UserUpdateRequest;
+import com.example.user.user.response.UserDto;
 import com.example.user.util.oAuth.JwtProperties;
 import com.example.user.util.oAuth.OauthToken;
+import com.example.user.util.oAuth.provider.Provider;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private OAuthService oAuthService;
+    private final OAuthService oAuthService;
     private final UserRepository userRepository;
 
-    public UserService(OAuthService oAuthService, UserRepository userRepository) {
-        this.oAuthService = oAuthService;
-        this.userRepository = userRepository;
-    }
-
-    public void setoAuthService(OAuthService oAuthService) {
-        this.oAuthService = oAuthService;
-    }
-
-    public User getUserByJWT(HttpServletRequest request) {
-        String jwtHeader = (request).getHeader(JwtProperties.HEADER_STRING);
+    private static Long getUserIdByJWT(HttpServletRequest request) {
+        String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
         String token = jwtHeader.replace(JwtProperties.TOKEN_PREFIX, "");
-        Long userId = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("id").asLong();
 
-        return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        return JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("id").asLong();
     }
 
-    public User getCurrentUser(HttpServletRequest request) {
-        Long userId = getUserByJWT(request).getId();
-        System.out.println("userId = " + userId);
-        return userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+    public Long getUserId(HttpServletRequest request) {
+        return getUserIdByJWT(request);
     }
 
-    public ResponseEntity<String> getLogin(String code, String provider) {
-        OauthToken oauthToken = oAuthService.getAccessToken(code, provider);
-        Long saveUserId = oAuthService.saveUser(oauthToken.getAccess_token(), provider);
-        String jwtToken = oAuthService.createJWTToken(saveUserId);
-        HttpHeaders headers = getHttpHeaders(jwtToken);
+    public UserDto getCurrentUser(HttpServletRequest request) {
+        Long userIdByJWT = getUserIdByJWT(request);
+        User user = userRepository.findById(userIdByJWT).orElseThrow(UserNotFoundException::new);
+        return user.toUserDto(user);
+    }
 
-        return ResponseEntity.ok().headers(headers).body("\"success\"");
+    @Transactional
+    public String getLogin(String code, String provider) {
+        Mono<OauthToken> oAuthToken = oAuthService.getOAuthToken(code, provider);
+        Long saveUserId = oAuthService.saveUser(oAuthToken, provider);
+
+        return oAuthService.createJWTToken(saveUserId);
     }
 
     @Transactional
     public String updateMyPage(HttpServletRequest request, UserUpdateRequest userUpdateRequest) {
-        User user = getUserByJWT(request);
-        User findUser = userRepository.findById(user.getId()).orElseThrow(UserNotFoundException::new);
+        Long userId = getUserIdByJWT(request);
+        User findUser = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         findUser.updateUser(userUpdateRequest.getNickname(), userUpdateRequest.getDescription());
 
-        return findUser.getId().toString();
+        return findUser.getNickname();
     }
 
     @Transactional
     public String deleteUser(HttpServletRequest request) {
-        User user = getUserByJWT(request);
-        user.setIsDeleted(true);
-        userRepository.flush();
-        return user.getId().toString();
-    }
-
-    private static HttpHeaders getHttpHeaders(String jwtToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
-        return headers;
+        Long userId = getUserIdByJWT(request);
+        User findUser = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+        findUser.setIsDeleted(true);
+        return findUser.getNickname();
     }
 }

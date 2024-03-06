@@ -1,14 +1,30 @@
-package com.example.user.util.oAuth.kakao;
+package com.example.user.util.oAuth.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
-public class KakaoProfile {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class KakaoProfile implements Profile {
+    private Long id;
+    private String connectedAt;
+    private Properties properties;
+    private KakaoAccount kakaoAccount;
 
-    public Long id;
-    public String connected_at;
-    public Properties properties;
-    public KakaoAccount kakao_account;
+    @Override
+    public String getEmail() {
+        return kakaoAccount.getEmail();
+    }
+
+    @Override
+    public String getName() {
+        return kakaoAccount.profile.nickname;
+    }
+
+    @Override
+    public String getPicture() {
+        return kakaoAccount.profile.profile_image_url;
+    }
 
     @Data
     public static class Properties {
@@ -36,5 +52,4 @@ public class KakaoProfile {
             public Boolean is_default_image;
         }
     }
-
 }

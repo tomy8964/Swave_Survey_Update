@@ -1,26 +1,28 @@
 package com.example.user.user.controller;
 
-import com.example.user.restAPI.service.InterRestApiUserService;
+import com.example.user.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/user/internal")
 @RequiredArgsConstructor
+@RequestMapping("/api/user/internal")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", allowCredentials = "true")
 @Tag(name = "UserInternalController", description = "내부(모듈간) API Controller")
 public class UserInternalController {
-    private final InterRestApiUserService interRestApiUserService;
+    private final UserService userService;
 
     @GetMapping("/me")
-    @Cacheable(value = "user", key = "'user-' + #request", cacheManager = "cacheManager" )
-    public Long getCurrentUser(HttpServletRequest request) {
-        return interRestApiUserService.getCurrentUser(request);
+    @Cacheable(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
+    public ResponseEntity<Long> getCurrentUser(HttpServletRequest request) {
+        return ResponseEntity.ok(userService.getUserId(request));
     }
 
 }

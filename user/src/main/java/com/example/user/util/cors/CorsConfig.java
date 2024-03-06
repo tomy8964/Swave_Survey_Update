@@ -1,7 +1,3 @@
-/**
- * util.cors.WebMvcConfig 로 수정
- */
-
 package com.example.user.util.cors;
 
 import org.springframework.context.annotation.Bean;

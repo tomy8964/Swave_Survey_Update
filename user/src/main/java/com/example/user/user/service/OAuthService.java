@@ -4,28 +4,26 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.example.user.user.domain.User;
 import com.example.user.user.domain.UserRole;
+import com.example.user.user.exception.JsonParsingException;
+import com.example.user.user.exception.UnKnownProviderException;
 import com.example.user.user.exception.UserNotFoundException;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.util.oAuth.JwtProperties;
 import com.example.user.util.oAuth.OauthToken;
-import com.example.user.util.oAuth.git.GitProfile;
-import com.example.user.util.oAuth.google.GoogleProfile;
-import com.example.user.util.oAuth.kakao.KakaoProfile;
+import com.example.user.util.oAuth.profile.GitProfile;
+import com.example.user.util.oAuth.profile.GoogleProfile;
+import com.example.user.util.oAuth.profile.KakaoProfile;
+import com.example.user.util.oAuth.profile.Profile;
+import com.example.user.util.oAuth.provider.Provider;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -33,161 +31,113 @@ import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class OAuthService {
-
     private final UserRepository userRepository;
-    private final WebClient webClient = WebClient.builder().build();
-    private RestTemplate rt = new RestTemplate();
+    private final WebClient webClient;
+    private final ObjectMapper mapper;
 
-    public OAuthService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    private static OauthToken getOAuthToken(String provider, String tokenResponse) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        OauthToken oauthToken;
-        try {
-            if (provider.equals("git")) {
-                // 문자열 파싱하여 Map 객체 생성
-                Map<String, String> map = new HashMap<>();
-                String[] pairs = Objects.requireNonNull(tokenResponse).split("&");
-                Arrays.stream(pairs).map(pair -> pair.split("=", 2)).forEach(tokens -> {
-                    String key = tokens[0];
-                    String value = tokens[1];
-                    map.put(key, value);
-                });
-                // Map 객체를 JSON 형태로 변환
-                ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writeValueAsString(map);
-
-                oauthToken = objectMapper.readValue(json, OauthToken.class);
-            } else {
-                oauthToken = objectMapper.readValue(tokenResponse, OauthToken.class);
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Json Parsing Error", e);
-        }
-        return oauthToken;
-    }
-
-    private static HttpEntity<MultiValueMap<String, String>> getTokenRequest(String code, String provider) {
-        String grantType;
-        String clientId;
-        String clientSecret;
-        String redirectUri;
-
-        switch (provider) {
-            case "kakao" -> {
-                grantType = "authorization_code";
-                clientId = "4646a32b25c060e42407ceb8c13ef14a";
-                clientSecret = "AWyAH1M24R9EYfUjJ1KCxcsh3DwvK8F7";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/kakao";
-            }
-            case "google" -> {
-                grantType = "authorization_code";
-                clientId = "278703087355-limdvm0almc07ldn934on122iorpfdv5.apps.googleusercontent.com";
-                clientSecret = "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";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/google";
-            }
-            default -> {
-                grantType = "authorization_code";
-                clientId = "Iv1.986aaa4d78140fb7";
-                clientSecret = "0c8e730012e8ca8e41a3922358572457f5cc57e4";
-                redirectUri = "http://172.16.210.80:80/oauth/callback/git";
-            }
-        }
-
+    private static HttpEntity<MultiValueMap<String, String>> getTokenRequest(String code, Provider provider) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", grantType);
-        params.add("client_id", clientId);
-        params.add("redirect_uri", redirectUri);
+        params.add("grant_type", provider.getGrantType());
+        params.add("client_id", provider.getClientId());
+        params.add("redirect_uri", provider.getRedirectUri());
         params.add("code", code);
-        params.add("client_secret", clientSecret);
+        params.add("client_secret", provider.getClientSecret());
+
         return new HttpEntity<>(params, headers);
     }
 
-    public void setRestTemplate(RestTemplate rt) {
-        this.rt = rt;
+    private OauthToken parseToOAuthToken(Provider provider, String tokenResponse) {
+        try {
+            if (provider.equals(Provider.GIT)) {
+                Map<String, String> map = new HashMap<>();
+                String[] pairs = Objects.requireNonNull(tokenResponse).split("&");
+                Arrays.stream(pairs)
+                        .map(pair -> pair.split("=", 2))
+                        .forEach(tokens -> {
+                            String key = tokens[0];
+                            String value = tokens[1];
+                            map.put(key, value);
+                        });
+                tokenResponse = mapper.writeValueAsString(map);
+            }
+            return mapper.readValue(tokenResponse, OauthToken.class);
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(e);
+        }
     }
 
-    public OauthToken getAccessToken(String code, String provider) {
-        String tokenResponse = webClient.post()
-                .uri(getProviderTokenUrl(provider))
+    public Mono<OauthToken> getOAuthToken(String code, String providerString) {
+        Provider provider = getProvider(providerString);
+        return webClient.post()
+                .uri(uriBuilder -> uriBuilder.path(provider.getRequestTokenUrl()).build())
                 .bodyValue(getTokenRequest(code, provider))
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
-
-        return getOAuthToken(provider, tokenResponse);
+                .map(tokenResponse -> parseToOAuthToken(provider, tokenResponse));
     }
 
-    public Long saveUser(String token, String provider) {
-        User user = null;
-
+    public Long saveUser(Mono<OauthToken> token, String providerString) {
+        Provider provider = getProvider(providerString);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token); //(1-4)
-        headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+        headers.add(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + token.subscribe(OauthToken::getAccess_token));
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8");
 
-        switch (provider) {
-            case "kakao" -> {
-                KakaoProfile profile = findKakaoProfile(headers);
+        Profile profile = getProfile(provider, headers);
+        // 프로필 정보로 회원 조회하여 존재하면 반환, 없으면 신규 회원 생성 후 반환
+        User user = findUser(profile, provider);
 
-                user = userRepository.findByEmailAndProvider(profile.getKakao_account().getEmail(), provider)
-                        .orElseGet(() ->
-                                User.builder()
-                                        .profileImgUrl(profile.getKakao_account().getProfile().getProfile_image_url())
-                                        .nickname(profile.getKakao_account().getProfile().getNickname())
-                                        .email(profile.getKakao_account().getEmail())
-                                        .provider(provider)
-                                        .description("joinByKakao")
-                                        .userRole(UserRole.USER)
-                                        .build());
-            }
-            case "google" -> {
-                GoogleProfile profile = findGoogleProfile(headers);
-
-                user = userRepository.findByEmailAndProvider(profile.getEmail(), provider)
-                        .orElseGet(() ->
-                                User.builder()
-                                        .profileImgUrl(profile.getPicture())
-                                        .nickname(profile.getName())
-                                        .email(profile.getEmail())
-                                        .provider(provider)
-                                        .description("joinByGoogle")
-                                        .userRole(UserRole.USER).build());
-            }
-            case "git" -> {
-                GitProfile profile = findGitProfile(headers);
-                try {
-                    JSONParser parser = new JSONParser();
-                    String strJson = profile.getEmail();
-                    JSONArray emails = (JSONArray) parser.parse(strJson);
-                    JSONObject value = (JSONObject) emails.get(0);
-
-                    String email = (String) value.get("email");
-
-                    user = userRepository.findByEmailAndProvider(email, provider)
-                            .orElseGet(() ->
-                                    User.builder()
-                                            .profileImgUrl(profile.getPicture())
-                                            .nickname(profile.getName())
-                                            .email(email)
-                                            .provider(provider)
-                                            .userRole(UserRole.USER)
-                                            .description("joinByGit")
-                                            .build());
-                } catch (ParseException e) {
-                    throw new RuntimeException("JSON Parsing ERROR", e);
-                }
-            }
+        // 신규 회원이면 저장 후 토큰 생성을 위한 id 반환
+        if (user.getId() == null) {
+            user = userRepository.save(user);
         }
+        return user.getId();
+    }
 
-        User savedUser = userRepository.save(Objects.requireNonNull(user));
-        //기존 회원이면 저장 건너뛰고 토큰 생성
-        return savedUser.getId();
+    private Provider getProvider(String provider) {
+        try {
+            return Provider.valueOf(provider.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new UnKnownProviderException(e);
+        }
+    }
+
+    private Profile getProfile(Provider provider, HttpHeaders headers) {
+        return switch (provider) {
+            case KAKAO -> findProfile(provider.getRequestInfoUrl(), headers, KakaoProfile.class);
+            case GOOGLE -> findProfile(provider.getRequestInfoUrl(), headers, GoogleProfile.class);
+            default -> findProfile(provider.getRequestInfoUrl(), headers, GitProfile.class);
+        };
+    }
+
+    private <T> T findProfile(String uri, HttpHeaders headers, Class<T> type) {
+        try {
+            return mapper.readValue(webClient.post()
+                    .uri(uri)
+                    .headers(httpHeaders -> httpHeaders.addAll(headers))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block(), type);
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(e);
+        }
+    }
+
+    private User findUser(Profile profile, Provider provider) {
+        return userRepository.findByEmailAndProvider(profile.getEmail(), provider.getValue())
+                .orElseGet(() ->
+                        User.builder()
+                                .profileImgUrl(profile.getPicture())
+                                .nickname(profile.getName())
+                                .email(profile.getEmail())
+                                .provider(provider)
+                                .userRole(UserRole.USER)
+                                .description("joinBy" + provider)
+                                .build());
     }
 
     public String createJWTToken(Long userId) {
@@ -198,114 +148,6 @@ public class OAuthService {
                 .withClaim("id", user.getId())
                 .withClaim("nickname", user.getNickname())
                 .sign(Algorithm.HMAC512(JwtProperties.SECRET));
-    }
-
-    //provider에 따라 URL 제공 구분
-    private String getProviderTokenUrl(String provider) {
-        return switch (provider) {
-            default -> "https://kauth.kakao.com/oauth/token";
-            case "google" -> "https://oauth2.googleapis.com/token";
-            case "git" -> "https://github.com/login/oauth/access_token";
-        };
-    }
-
-    private KakaoProfile findKakaoProfile(HttpHeaders headers) {
-
-        HttpEntity<MultiValueMap<String, String>> kakaoProfileRequest =
-                new HttpEntity<>(headers);
-
-        // Http 요청 (POST 방식) 후, response 변수에 응답을 받음
-        ResponseEntity<String> kakaoProfileResponse = rt.exchange(
-                "https://kapi.kakao.com/v2/user/me",
-                HttpMethod.POST,
-                kakaoProfileRequest,
-                String.class
-        );
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        KakaoProfile kakaoProfile;
-
-        try {
-            kakaoProfile = objectMapper.readValue(kakaoProfileResponse.getBody(), KakaoProfile.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return kakaoProfile;
-    }
-
-    private GoogleProfile findGoogleProfile(HttpHeaders headers) {
-
-        HttpEntity<MultiValueMap<String, String>> googleProfileRequest =
-                new HttpEntity<>(headers);
-
-        // Http 요청 (POST 방식) 후, response 변수에 응답을 받음
-        ResponseEntity<String> googleProfileResponse = rt.exchange(
-                "https://www.googleapis.com/oauth2/v3/userinfo",
-                HttpMethod.POST,
-                googleProfileRequest,
-                String.class
-        );
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        GoogleProfile googleProfile;
-        try {
-            googleProfile = objectMapper.readValue(googleProfileResponse.getBody(), GoogleProfile.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return googleProfile;
-    }
-
-    private GitProfile findGitProfile(HttpHeaders headers) {
-
-        HttpEntity<MultiValueMap<String, String>> gitProfileRequest =
-                new HttpEntity<>(headers);
-        //spring oauth access token gitHub server userinfo
-        // Http 요청 (POST 방식) 후, response 변수에 응답을 받음
-        ResponseEntity<String> gitProfileResponse = rt.exchange(
-                "https://api.github.com/user",
-                HttpMethod.GET,
-                gitProfileRequest,
-                String.class
-        );
-
-        String name;
-        String picture;
-
-        try {
-            JSONParser parser = new JSONParser();
-            String userInfo = gitProfileResponse.getBody();
-            JSONObject jsonObject = (JSONObject) parser.parse(userInfo);
-            name = (String) jsonObject.get("login");
-            picture = (String) jsonObject.get("avatar_url");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
-        //Git은 email 정보를 다시 한번 받아와야 함
-        ResponseEntity<String> gitEmailResponse = rt.exchange(
-                "https://api.github.com/user/emails",
-                HttpMethod.GET,
-                gitProfileRequest,
-                String.class
-        );
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        GitProfile gitProfile;
-        try {
-            gitProfile = objectMapper.readValue(gitProfileResponse.getBody(), GitProfile.class);
-
-            gitProfile.email = gitEmailResponse.getBody();
-            gitProfile.name = name;
-            gitProfile.picture = picture;
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return gitProfile;
     }
 }
 

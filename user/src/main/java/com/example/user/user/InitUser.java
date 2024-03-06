@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.example.user.user.domain.User;
 import com.example.user.user.domain.UserRole;
 import com.example.user.util.oAuth.JwtProperties;
+import com.example.user.util.oAuth.provider.Provider;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -39,7 +40,7 @@ public class InitUser {
                         .description("admin")
                         .email("tomy8964@naver.com")
                         .userRole(UserRole.USER)
-                        .provider("google")
+                        .provider(Provider.GOOGLE)
                         .profileImgUrl(null)
                         .build();
                 em.persist(user);

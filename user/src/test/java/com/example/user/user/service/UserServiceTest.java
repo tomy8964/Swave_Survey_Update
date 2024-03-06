@@ -3,7 +3,9 @@ package com.example.user.user.service;
 import com.example.user.user.domain.User;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.user.request.UserUpdateRequest;
+import com.example.user.user.response.UserDto;
 import com.example.user.util.oAuth.JwtProperties;
+import com.example.user.util.oAuth.provider.Provider;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +37,7 @@ public class UserServiceTest {
         // given
         User firstUser = User.builder()
                 .email("sample@example.com")
-                .provider("kakao")
+                .provider(Provider.KAKAO)
                 .build();
 
         User savedUser = userRepository.save(firstUser);
@@ -45,11 +47,10 @@ public class UserServiceTest {
         request.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 
         //when
-        User userByJWT = userService.getUserByJWT(request);
+        UserDto userByJWT = userService.getCurrentUser(request);
 
         //then
         assertThat(userByJWT).isNotNull();
-        assertThat(savedUser.getId()).isEqualTo(userByJWT.getId());
         assertThat(savedUser.getEmail()).isEqualTo(userByJWT.getEmail());
         assertThat(savedUser.getProvider()).isEqualTo(userByJWT.getProvider());
     }
@@ -62,7 +63,7 @@ public class UserServiceTest {
                 .nickname("savedUser")
                 .description("saved 유저입니다.")
                 .email("sample@example.com")
-                .provider("kakao")
+                .provider(Provider.KAKAO)
                 .build();
         User savedUser = userRepository.save(firstUser);
         em.flush();
@@ -95,7 +96,7 @@ public class UserServiceTest {
                 .nickname("savedUser")
                 .description("saved 유저입니다.")
                 .email("sample@example.com")
-                .provider("kakao")
+                .provider(Provider.GOOGLE)
                 .build();
         User savedUser = userRepository.save(firstUser);
         String jwtToken = oAuthService.createJWTToken(savedUser.getId());

@@ -1,48 +1,52 @@
 package com.example.user.user.controller;
 
-import com.example.user.user.domain.User;
 import com.example.user.user.request.UserUpdateRequest;
+import com.example.user.user.response.UserDto;
 import com.example.user.user.service.UserService;
+import com.example.user.util.oAuth.JwtProperties;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/user/external")
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", allowCredentials = "true")
 public class UserExternalController {
-    private UserService userService;
 
-    public UserExternalController(UserService userService) {
-        this.userService = userService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
+    private final UserService userService;
 
     @PostMapping("/oauth/token")
     public ResponseEntity<String> getLogin(@RequestParam("code") String code, @RequestParam("provider") String provider) {
-        return userService.getLogin(code, provider);
+        String jwtToken = userService.getLogin(code, provider);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(JwtProperties.HEADER_STRING, jwtToken);
+        return ResponseEntity.ok().headers(headers).body("Login Success");
     }
 
     @GetMapping("/me")
     @Cacheable(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
-    public User getCurrentUser(HttpServletRequest request) {
-        return userService.getCurrentUser(request);
+    public ResponseEntity<UserDto> getCurrentUser(HttpServletRequest request) {
+        return ResponseEntity.ok(userService.getCurrentUser(request));
     }
 
     @PatchMapping("/updatepage")
     @CacheEvict(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
-    public String updateMyPage(HttpServletRequest request, @RequestBody UserUpdateRequest user) {
-        return userService.updateMyPage(request, user);
+    public ResponseEntity<String> updateMyPage(HttpServletRequest request, @RequestBody UserUpdateRequest user) {
+        return ResponseEntity.ok(userService.updateMyPage(request, user) +
+                "님의 정보가 변경되었습니다.");
     }
 
     @PatchMapping("/deleteuser")
     @CacheEvict(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
-    public String deleteUser(HttpServletRequest request) {
-        return userService.deleteUser(request);
+    public ResponseEntity<String> deleteUser(HttpServletRequest request) {
+        return new ResponseEntity<>(userService.deleteUser(request) + "님의 정보가 삭제되었습니다.", HttpStatus.NO_CONTENT);
     }
 }
+
+

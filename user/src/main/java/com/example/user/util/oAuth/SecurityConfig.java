@@ -1,6 +1,5 @@
 package com.example.user.util.oAuth;
 
-import com.example.user.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
@@ -24,7 +23,6 @@ import org.springframework.web.filter.CorsFilter;
 public class SecurityConfig {
 
     public static final String FRONT_URL = "http://localhost:3000";
-    private final UserRepository userRepository;
     private final CorsFilter corsFilter;
 
     // @Bean -> 해당 메소드의 리턴되는 오브젝트를 IoC로 등록해줌

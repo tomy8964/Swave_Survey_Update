@@ -1,5 +1,7 @@
 package com.example.user.user.domain;
 
+import com.example.user.user.response.UserDto;
+import com.example.user.util.oAuth.provider.Provider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -28,11 +30,12 @@ public class User {
     private String profileImgUrl;
     private String nickname;
     private String email;
-    private String provider;
+    private String description;
 
     @Enumerated(EnumType.STRING)
+    private Provider provider;
+    @Enumerated(EnumType.STRING)
     private UserRole userRole;
-    private String description;
 
     @JsonProperty("deleted")
     private boolean isDeleted = false;
@@ -42,8 +45,9 @@ public class User {
 
 
     @Builder
-    public User(String profileImgUrl, String nickname,
-                String email, String provider, UserRole userRole, String description) {
+    public User(Long id, String profileImgUrl, String nickname,
+                String email, Provider provider, UserRole userRole, String description) {
+        this.id = id;
         this.profileImgUrl = profileImgUrl;
         this.nickname = nickname;
         this.email = email;
@@ -61,4 +65,15 @@ public class User {
         this.isDeleted = isDeleted;
     }
 
+    public UserDto toUserDto(User user) {
+        return UserDto.builder()
+                .profileImgUrl(user.getProfileImgUrl())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .provider(user.getProvider())
+                .userRole(user.getUserRole())
+                .description(user.getDescription())
+                .createTime(user.getCreateTime())
+                .build();
+    }
 }
