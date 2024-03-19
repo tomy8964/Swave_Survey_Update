@@ -1,6 +1,9 @@
-# SWAVE Project - WaveForm
-## 코드 개선 및 공부
-## [Notion - 개선 작업기](https://tomy8964.notion.site/Swave-WaveForm-59f2b958343d49818afe3e94365ca918?pvs=4)
+# SWAVE Project - WaveForm 개선 프로젝트
+[SWAVE Project - WaveForm](https://github.com/KEA-SWAVE-SURVEY/spring-gateway)의 낮은 코드 퀄리티, 왜 사용하는지 모르고 사용한 기술 스택, 배포 환경 변경, 막무가내로 작성한 테스트 코드, 난잡한 에러 처리, 부족한 성능 등을 고치면서 공부하기 위해 시작한 프로젝트입니다.
+
+> 현재 `SurveyDocument` , `User` 모듈 수정 중입니다.
+
+## [Notion - 개선 작업기](https://tomy8964.notion.site/WaveForm-432627460d6d4328819a304958559f32)
 
 
 <div align="center">
@@ -26,33 +29,18 @@
 
  </div>
 
-## Version
-1. Spring Boot Version : 3.0.5
-2. JDK : 17
-3. MySQL : 8
-4. Build configuration
-   - local: build in Spring Boot Terminal
-   - server: Jenkins, docker
+## CI/CD
+
+- `GitHub Webhooks & Jenkins & Docker & ArgoCD` 를 활용한 무중단 배포
+
+## Architecture
+
+![image](https://github.com/tomy8964/Swave_Survey_Update/assets/103511161/da7c77ed-d12a-4b05-95ad-41950ae594d4)
 
 
+## GitHub
+- https://github.com/tomy8964/Swave_Survey_Update
+- https://github.com/tomy8964/argocd-back
+- https://github.com/tomy8964/helm-charts.git
 
-
-</br>
-</br>
-<h2>소개</h2>
-
-- 본 어플리케이션은 설문조사 작성자의 효율성을 높이기 위한 기능을 제공합니다.    
-- ChatGPT를 활용하여 질문 추천 기능이 추가됩니다.    
-- 이 기능은 작성자들이 보다 쉽고 효율적으로 질문을 작성할 수 있도록 도와줍니다. 또한 이 기능을 통해 설문 조사 질문의 품질을 향상시킬 수 잇어 보
-다 정확하고 유익한 결과를 도출할 수 있습니다.    
-- 설문의 문항 수가 많을 경우 답변자의 집중력이나 동기가 감소해 답변의 신뢰도가 떨어질 수 있습니다. 이를 대비하기 위해 신뢰도 평가 문항을
-추가해 성실하게 답변하지 않은 응답은 제외시키는 기능을 제공합니다.   
-- 설문 작성자는 결과를 실시간으로 확인할 수 있으며 빠르게 결과를 분석할 수 있습니다. 또한 연관 분석, 교차 분석, 비교 분석 머신러닝 기능을
-포함한 상세 분석 리포트를 제공하여 효과적인 비즈니스 인사이트를 제공할 수 있습니다.   
-
-### 커뮤니티
-
-💬 [Join the #SWAVE Notion Community!](https://dogfactory.notion.site/KEA-PROJECT-1da977c636264af292055b41e0909454?pvs=4)
-
-# SWAVE Project - WAVEFORM
 
