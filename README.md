@@ -35,7 +35,8 @@
 
 ## Architecture
 
-![image](https://github.com/tomy8964/Swave_Survey_Update/assets/103511161/da7c77ed-d12a-4b05-95ad-41950ae594d4)
+![image](https://github.com/tomy8964/Swave_Survey_Update/assets/103511161/6c8b961d-0964-4a22-8f4f-5b71891bff05)
+
 
 
 ## GitHub
