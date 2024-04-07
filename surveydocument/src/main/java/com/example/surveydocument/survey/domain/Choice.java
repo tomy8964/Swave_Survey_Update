@@ -1,9 +1,7 @@
 package com.example.surveydocument.survey.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 
@@ -11,6 +9,7 @@ import org.hibernate.annotations.Where;
 @Entity
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Where(clause = "is_deleted = false")
 @SQLDelete(sql = "UPDATE choice SET is_deleted = true WHERE choice_id = ?")
 public class Choice {
@@ -31,17 +30,6 @@ public class Choice {
     @Builder.Default
     @Column(name = "is_deleted")
     private boolean isDeleted = Boolean.FALSE;
-
-    public Choice(Long id, String title, int count, QuestionDocument questionDocument, boolean isDeleted) {
-        this.id = id;
-        this.title = title;
-        this.count = count;
-        if (questionDocument != null) {
-            this.questionDocument = questionDocument;
-            questionDocument.getChoiceList().add(this);
-        }
-        this.isDeleted = isDeleted;
-    }
 
     public void addCount() {
         this.count++;
