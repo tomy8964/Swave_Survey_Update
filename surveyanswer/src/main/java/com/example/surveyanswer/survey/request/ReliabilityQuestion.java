@@ -12,6 +12,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ReliabilityQuestion {
+    public static final long RELIABILITY_QUESTION_ID = -1L;
     private String title;
     private int type;
     private List<ReliabilityChoice> choiceList = new ArrayList<>();
@@ -28,7 +29,7 @@ public class ReliabilityQuestion {
 
     public QuestionDetailDto toQuestionDetailDto() {
         QuestionDetailDto questionDetailDto = QuestionDetailDto.builder()
-                .id(-1L)
+                .id(RELIABILITY_QUESTION_ID)
                 .questionType(this.getType())
                 .title(this.getTitle())
                 .choiceList(new ArrayList<>())
@@ -36,7 +37,7 @@ public class ReliabilityQuestion {
 
         for (ReliabilityChoice reliabilityChoice : this.getChoiceList()) {
             ChoiceDetailDto choiceDetailDto = ChoiceDetailDto.builder()
-                    .id(-1L)
+                    .id(RELIABILITY_QUESTION_ID)
                     .title(reliabilityChoice.getChoiceName())
                     .count(0)
                     .build();

@@ -141,7 +141,7 @@ public class SurveyAnswerService {
     private static QuestionResponseDto checkValidResponseByReliabilityTest(@NotNull SurveyResponseDto surveyResponse) {
         QuestionResponseDto reliabilityQuestion = null;
         for (QuestionResponseDto questionResponseDto : surveyResponse.getQuestionResponse()) {
-            if (questionResponseDto.getAnswerId() == -1L) {
+            if (questionResponseDto.getAnswerId() == ReliabilityQuestion.RELIABILITY_QUESTION_ID) {
                 for (ReliabilityQuestion question : reliabilityQuestionList) {
                     if (questionResponseDto.getTitle().equals(question.getTitle())) {
                         if (questionResponseDto.getAnswer().equals(question.getCorrectAnswer())) {
