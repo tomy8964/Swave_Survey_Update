@@ -28,6 +28,9 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class SurveyAnalyzeService {
+    private static final int APRIORI_NUMBER = 0;
+    private static final int COMPARE_NUMBER = 1;
+    private static final int CHI_NUMBER = 2;
     private final ChiAnalyzeRepository chiAnalyzeRepository;
     private final CompareAnalyzeRepository compareAnalyzeRepository;
     private final AprioriAnalyzeRepository aprioriAnalyzeRepository;
@@ -36,21 +39,28 @@ public class SurveyAnalyzeService {
     private final SurveyAnalyzeRepository surveyAnalyzeRepository;
     private final RestAPIService restAPIService;
 
+    private static List<Object> getListResult(String line) throws JsonProcessingException {
+        String inputString = line.replaceAll("'", "");
+
+        log.info("result python");
+        log.info(inputString);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Object> resultList = objectMapper.readValue(inputString, List.class);
+        log.info(String.valueOf(resultList));
+        return resultList;
+    }
+
     // 파이썬에 DocumentId 보내주고 분석결과 Entity에 매핑해서 저장
     public void analyze(String stringId) throws InvalidPythonException {
         long surveyDocumentId = Long.parseLong(stringId);
 
         try {
-            String line = "[[['1', [0.6666666666666666, '3'], [0.3333333333333333, '4']], ['2', [0.6666666666666666, '4'], [0.3333333333333333, '3']], ['3', [0.6666666666666666, '1'], [0.3333333333333333, '2']], ['4', [0.6666666666666666, '2'], [0.3333333333333333, '1']]], [[[1.0], [1.0]], [[1.0], [1.0]]], [[0.10247043485974942, 1.0], [1.0, 0.10247043485974942]]]";
-            line = getAnalyzeResult(surveyDocumentId);
-            // for test
-            if (surveyDocumentId == -1) {
-                line = getAnalyzeResult(surveyDocumentId);
-            }
-            List<Object> testList = getListResult(line);
-            ArrayList<Object> apriori = (ArrayList<Object>) testList.get(0);
-            ArrayList<Object> compare = (ArrayList<Object>) testList.get(1);
-            ArrayList<Object> chi = (ArrayList<Object>) testList.get(2);
+            String line = getAnalyzeResult(surveyDocumentId);
+            List<Object> resultList = getListResult(line);
+            ArrayList<Object> apriori = (ArrayList<Object>) resultList.get(APRIORI_NUMBER);
+            ArrayList<Object> compare = (ArrayList<Object>) resultList.get(COMPARE_NUMBER);
+            ArrayList<Object> chi = (ArrayList<Object>) resultList.get(CHI_NUMBER);
 
             saveSurveyAnalyze(surveyDocumentId, apriori, compare, chi);
         } catch (IOException e) {
@@ -143,18 +153,6 @@ public class SurveyAnalyzeService {
         }
 
         log.error("Process exited with code " + exitCode);
-    }
-
-    private static List<Object> getListResult(String line) throws JsonProcessingException {
-        String inputString = line.replaceAll("'", "");
-
-        log.info("result python");
-        log.info(inputString);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<Object> testList = objectMapper.readValue(inputString, List.class);
-        log.info(String.valueOf(testList));
-        return testList;
     }
 
     private void saveSurveyAnalyze(long surveyDocumentId, ArrayList<Object> apriori, ArrayList<Object> compare, ArrayList<Object> chi) {
@@ -321,7 +319,7 @@ public class SurveyAnalyzeService {
                 .getResources("classpath*:python/python4.py");
 
         log.info(String.valueOf(resources[0]));
-        
+
         String substring = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() - 1);
         log.info(substring);
 
