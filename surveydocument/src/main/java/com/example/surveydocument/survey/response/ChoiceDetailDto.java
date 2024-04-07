@@ -1,11 +1,10 @@
 package com.example.surveydocument.survey.response;
 
+import com.example.surveydocument.survey.domain.Choice;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,5 +15,13 @@ public class ChoiceDetailDto {
     private String title;
     private int count;
 
-    // getter, setter 생략
+    public ChoiceDetailDto(Choice choice) {
+        this.id = choice.getId();
+        this.title = choice.getTitle();
+        this.count = choice.getCount();
+    }
+
+    public static ChoiceDetailDto fromChoice(Choice choice) {
+        return new ChoiceDetailDto(choice);
+    }
 }

@@ -17,4 +17,5 @@ public class QuestionDetailDto {
     private int questionType;
     private List<ChoiceDetailDto> choiceList;
     private List<WordCloudDto> wordCloudDtos;
+
 }
