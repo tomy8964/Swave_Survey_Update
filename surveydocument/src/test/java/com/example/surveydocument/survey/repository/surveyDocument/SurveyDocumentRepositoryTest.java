@@ -107,6 +107,8 @@ public class SurveyDocumentRepositoryTest {
         SurveyDocument surveyDocument = createSurveyDocument();
         SurveyDocument saveSurvey = surveyDocumentRepository.save(surveyDocument);
 
+        System.out.println("------------");
+
         // when
         SurveyDocument findSurvey = surveyDocumentRepository.findSurveyById(saveSurvey.getId()).get();
 
@@ -138,6 +140,11 @@ public class SurveyDocumentRepositoryTest {
             List<Choice> choiceList = questionDocumentList.get(i).getChoiceList();
             for (int j = 0; j < choices.size(); j++) {
                 assertEquals(choices.get(j).getTitle(), choiceList.get(j).getTitle());
+            }
+            List<WordCloud> wordClouds = questionDocuments.get(i).getWordCloudList();
+            List<WordCloud> wordCloudList = questionDocumentList.get(i).getWordCloudList();
+            for (int j = 0; j < wordClouds.size(); j++) {
+                assertEquals(wordClouds.get(j).getTitle(), wordCloudList.get(j).getTitle());
             }
         }
     }
