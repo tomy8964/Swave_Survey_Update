@@ -16,7 +16,5 @@ public interface SurveyDocumentRepositoryCustom {
     Optional<SurveyDocument> findSurveyById(Long surveyDocumentId);
     Optional<ManagementResponseDto> findManageById(Long surveyDocumentId);
 
-    Optional<SurveyDocument> findByIdToUpdate(Long surveyId);
-
     Boolean updateManage(Long id, Boolean enable);
 }

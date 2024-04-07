@@ -1,5 +1,6 @@
 package com.example.surveydocument.survey.repository.surveyDocument;
 
+import com.example.surveydocument.survey.domain.QuestionDocument;
 import com.example.surveydocument.survey.domain.SurveyDocument;
 import com.example.surveydocument.survey.response.ManagementResponseDto;
 import com.example.surveydocument.survey.response.QManagementResponseDto;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.surveydocument.survey.domain.QChoice.choice;
 import static com.example.surveydocument.survey.domain.QDateManagement.dateManagement;
 import static com.example.surveydocument.survey.domain.QDesign.design;
 import static com.example.surveydocument.survey.domain.QQuestionDocument.questionDocument;
@@ -57,15 +59,25 @@ public class SurveyDocumentRepositoryImpl implements SurveyDocumentRepositoryCus
 
     @Override
     public Optional<SurveyDocument> findSurveyById(Long surveyDocumentId) {
-        return Optional.ofNullable(
-                queryFactory
-                        .selectFrom(surveyDocument)
-                        .leftJoin(surveyDocument.design, design).fetchJoin()
-                        .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
-                        .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
-                        .where(surveyDocument.id.eq(surveyDocumentId))
-                        .distinct()
-                        .fetchOne());
+        SurveyDocument survey = queryFactory
+                .selectFrom(surveyDocument)
+                .leftJoin(surveyDocument.design, design).fetchJoin()
+                .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
+                .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
+                .where(surveyDocument.id.eq(surveyDocumentId))
+                .distinct()
+                .fetchOne();
+
+        if (survey != null && survey.getQuestionDocumentList() != null) {
+            List<QuestionDocument> questionDocuments = queryFactory
+                    .selectFrom(questionDocument)
+                    .leftJoin(questionDocument.choiceList, choice).fetchJoin()
+                    .where(questionDocument.in(survey.getQuestionDocumentList()))
+                    .distinct()
+                    .fetch();
+        }
+
+        return Optional.ofNullable(survey);
     }
 
     @Override
@@ -74,19 +86,6 @@ public class SurveyDocumentRepositoryImpl implements SurveyDocumentRepositoryCus
                 queryFactory.select(new QManagementResponseDto(dateManagement.startDate, dateManagement.deadline, dateManagement.isEnabled))
                         .from(dateManagement)
                         .where(dateManagement.surveyDocument.id.eq(surveyDocumentId))
-                        .fetchOne());
-    }
-
-    @Override
-    public Optional<SurveyDocument> findByIdToUpdate(Long surveyDocumentId) {
-        return Optional.ofNullable(
-                queryFactory
-                        .selectFrom(surveyDocument)
-                        .leftJoin(surveyDocument.design, design).fetchJoin()
-                        .leftJoin(surveyDocument.date, dateManagement).fetchJoin()
-                        .leftJoin(surveyDocument.questionDocumentList, questionDocument).fetchJoin()
-                        .where(surveyDocument.id.eq(surveyDocumentId))
-                        .distinct()
                         .fetchOne());
     }
 
