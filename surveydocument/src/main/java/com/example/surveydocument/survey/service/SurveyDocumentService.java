@@ -1,9 +1,9 @@
 package com.example.surveydocument.survey.service;
 
-import com.example.surveydocument.restAPI.service.RestApiService;
-import com.example.surveydocument.survey.domain.*;
 import com.example.surveydocument.exception.InvalidUserException;
 import com.example.surveydocument.exception.NotFoundException;
+import com.example.surveydocument.restAPI.service.RestApiService;
+import com.example.surveydocument.survey.domain.*;
 import com.example.surveydocument.survey.repository.choice.ChoiceRepository;
 import com.example.surveydocument.survey.repository.date.DateRepository;
 import com.example.surveydocument.survey.repository.design.DesignRepository;
@@ -38,8 +38,7 @@ public class SurveyDocumentService {
     @Transactional
     public Long createSurvey(HttpServletRequest request, SurveyRequestDto surveyRequest) {
         // 유저 정보 받아오기
-        Long userId = apiService.getCurrentUserFromJWTToken(request)
-                .orElseThrow(InvalidUserException::new);
+        Long userId = getCurrentUserId(request);
 
         // Survey Request 를 Survey Document 에 저장하기
         SurveyDocument surveyDocument = SurveyDocument.builder()
@@ -97,8 +96,7 @@ public class SurveyDocumentService {
 
     // list method 로 SurveyDocument 조회
     public Page<SurveyPageDto> readSurveyList(HttpServletRequest request1, PageRequestDto request2) {
-        Long userCode = apiService.getCurrentUserFromJWTToken(request1)
-                .orElseThrow(InvalidUserException::new);
+        Long userCode = getCurrentUserId(request1);
         PageRequest pageRequest = PageRequest.of(request2.getPage(), 10);
 
         return surveyDocumentRepository.pagingSurvey(userCode, request2.getSort1(), request2.getSort2(), pageRequest);
@@ -203,13 +201,8 @@ public class SurveyDocumentService {
     }
 
     public ChoiceDetailDto getChoice(Long choiceId) {
-        Choice choice = choiceRepository.findById(choiceId)
-                .orElseThrow(() -> new NotFoundException("선택지"));
-        ChoiceDetailDto choiceDetailDto = new ChoiceDetailDto();
-        choiceDetailDto.setId(choice.getId());
-        choiceDetailDto.setTitle(choice.getTitle());
-        choiceDetailDto.setCount(choice.getCount());
-        return choiceDetailDto;
+        return ChoiceDetailDto.fromChoice(choiceRepository.findById(choiceId)
+                .orElseThrow(() -> new NotFoundException("선택지")));
     }
 
     public QuestionDetailDto getQuestion(Long questionId) {
@@ -227,11 +220,10 @@ public class SurveyDocumentService {
 
     @Transactional
     public Long updateSurvey(HttpServletRequest request, SurveyRequestDto requestDto, Long surveyId) {
-        SurveyDocument surveyDocument = surveyDocumentRepository.findByIdToUpdate(surveyId)
+        SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyId)
                 .orElseThrow(() -> new NotFoundException("설문"));
         Long userId = surveyDocument.getUserId();
-        Long jwtUserId = apiService.getCurrentUserFromJWTToken(request)
-                .orElseThrow(InvalidUserException::new);
+        Long jwtUserId = getCurrentUserId(request);
         if (Objects.equals(userId, jwtUserId)) {
             return surveyDocument.updateSurvey(requestDto);
         } else throw new InvalidUserException("이 설문을 수정할 권한이 없습니다.");
@@ -242,8 +234,7 @@ public class SurveyDocumentService {
         SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyId)
                 .orElseThrow(() -> new NotFoundException("설문"));
         Long userId = surveyDocument.getUserId();
-        Long jwtUserId = apiService.getCurrentUserFromJWTToken(request)
-                .orElseThrow(InvalidUserException::new);
+        Long jwtUserId = getCurrentUserId(request);
         if (Objects.equals(userId, jwtUserId)) {
             surveyDocumentRepository.deleteById(surveyId);
             return surveyId;
@@ -302,34 +293,23 @@ public class SurveyDocumentService {
                 for (QuestionAnswerDto questionAnswer : questionAnswerList) {
                     // 그 중에 주관식 답변만
                     if (questionAnswer.getQuestionType() == 0) {
-                        ChoiceDetailDto choiceDto = new ChoiceDetailDto();
-                        choiceDto.setId(questionAnswer.getId());
-                        choiceDto.setTitle(questionAnswer.getCheckAnswer());
-                        choiceDto.setCount(0);
-
-                        choiceDtos.add(choiceDto);
+                        choiceDtos.add(ChoiceDetailDto.fromChoice(Choice.builder()
+                                .questionDocument(questionDocument)
+                                .title(questionAnswer.getCheckAnswer())
+                                .count(0)
+                                .build()));
                     }
                 }
             } else {
                 for (Choice choice : questionDocument.getChoiceList()) {
-                    ChoiceDetailDto choiceDto = new ChoiceDetailDto();
-                    choiceDto.setId(choice.getId());
-                    choiceDto.setTitle(choice.getTitle());
-                    choiceDto.setCount(choice.getCount());
-
-                    choiceDtos.add(choiceDto);
+                    choiceDtos.add(ChoiceDetailDto.fromChoice(choice));
                 }
             }
             questionDto.setChoiceList(choiceDtos);
 
             List<WordCloudDto> wordCloudDtos = new ArrayList<>();
             for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
-                WordCloudDto wordCloudDto = new WordCloudDto();
-                wordCloudDto.setId(wordCloud.getId());
-                wordCloudDto.setTitle(wordCloud.getTitle());
-                wordCloudDto.setCount(wordCloud.getCount());
-
-                wordCloudDtos.add(wordCloudDto);
+                wordCloudDtos.add(WordCloudDto.fromWordCloud(wordCloud));
             }
             questionDto.setWordCloudDtos(wordCloudDtos);
 
@@ -349,7 +329,7 @@ public class SurveyDocumentService {
         questionDto.setQuestionType(questionDocument.getQuestionType());
 
         // question type에 따라 choice 에 들어갈 내용 구분
-        // 주관식이면 choice title에 주관식 응답을 저장??
+        // 주관식이면 choice title에 주관식 응답을 저장
         // 객관식 찬부식 -> 기존 방식 과 똑같이 count를 올려서 저장
         List<ChoiceDetailDto> choiceDtos = new ArrayList<>();
         if (questionDocument.getQuestionType() == 0) {
@@ -359,37 +339,31 @@ public class SurveyDocumentService {
             for (QuestionAnswerDto questionAnswer : questionAnswerList) {
                 // 그 중에 주관식 답변만
                 if (questionAnswer.getQuestionType() == 0) {
-                    ChoiceDetailDto choiceDto = new ChoiceDetailDto();
-                    choiceDto.setId(questionAnswer.getId());
-                    choiceDto.setTitle(questionAnswer.getCheckAnswer());
-                    choiceDto.setCount(0);
-
-                    choiceDtos.add(choiceDto);
+                    choiceDtos.add(ChoiceDetailDto.fromChoice(Choice.builder()
+                            .questionDocument(questionDocument)
+                            .title(questionAnswer.getCheckAnswer())
+                            .count(0)
+                            .build()));
                 }
             }
         } else {
             for (Choice choice : questionDocument.getChoiceList()) {
-                ChoiceDetailDto choiceDto = new ChoiceDetailDto();
-                choiceDto.setId(choice.getId());
-                choiceDto.setTitle(choice.getTitle());
-                choiceDto.setCount(choice.getCount());
-
-                choiceDtos.add(choiceDto);
+                choiceDtos.add(ChoiceDetailDto.fromChoice(choice));
             }
         }
         questionDto.setChoiceList(choiceDtos);
 
         List<WordCloudDto> wordCloudDtos = new ArrayList<>();
         for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
-            WordCloudDto wordCloudDto = new WordCloudDto();
-            wordCloudDto.setId(wordCloud.getId());
-            wordCloudDto.setTitle(wordCloud.getTitle());
-            wordCloudDto.setCount(wordCloud.getCount());
-
-            wordCloudDtos.add(wordCloudDto);
+            wordCloudDtos.add(WordCloudDto.fromWordCloud(wordCloud));
         }
         questionDto.setWordCloudDtos(wordCloudDtos);
 
         return questionDto;
+    }
+
+    private Long getCurrentUserId(HttpServletRequest request) {
+        return apiService.getCurrentUserFromJWTToken(request)
+                .orElseThrow(InvalidUserException::new);
     }
 }
