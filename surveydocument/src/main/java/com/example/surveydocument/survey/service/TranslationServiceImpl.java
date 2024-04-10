@@ -68,12 +68,20 @@ public class TranslationServiceImpl implements TranslationService {
 
     @Override
     public ChoiceDetailDto entityToDto(Choice choice) {
-        return new ChoiceDetailDto(choice.getId(), choice.getTitle(), choice.getCount());
+        return ChoiceDetailDto.builder()
+                .id(choice.getId())
+                .title(choice.getTitle())
+                .count(choice.getCount())
+                .build();
     }
 
     @Override
     public WordCloudDto entityToDto(WordCloud wordCloud) {
-        return new WordCloudDto(wordCloud.getId(), wordCloud.getTitle(), wordCloud.getCount());
+        return WordCloudDto.builder()
+                .id(wordCloud.getId())
+                .title(wordCloud.getTitle())
+                .count(wordCloud.getCount())
+                .build();
     }
 
     @Override
