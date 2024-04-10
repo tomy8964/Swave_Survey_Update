@@ -1,5 +1,6 @@
 package com.example.surveydocument.survey.response;
 
+import com.example.surveydocument.survey.request.DateDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,9 +21,7 @@ public class SurveyDetailDto {
     private List<QuestionDetailDto> questionList;
     private Boolean reliability;
 
-    private Date startDate;
-    private Date endDate;
-    private Boolean enable;
+    private ManagementResponseDto manage;
 
     private DesignResponseDto design;
 }

@@ -25,7 +25,6 @@ public class SurveyDocumentExternalController {
 
     private final SurveyDocumentService surveyService;
 
-    //Response (저장된 survey document id 값을 보내주기)
     @PostMapping(value = "/create")
     public ResponseEntity<Long> create(HttpServletRequest request, @RequestBody SurveyRequestDto surveyForm) {
         return new ResponseEntity<>(surveyService.createSurvey(request, surveyForm), HttpStatus.CREATED);
@@ -68,7 +67,7 @@ public class SurveyDocumentExternalController {
     // 설문 관리 날짜
     @PatchMapping("/management/date/{id}")
     public ResponseEntity<Long> managementDate(@PathVariable Long id, @RequestBody DateDto dateRequest) {
-        return new ResponseEntity<>(surveyService.managementDate(id, dateRequest), HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(surveyService.updateDate(id, dateRequest), HttpStatus.NO_CONTENT);
     }
 
     // 설문 관리 Get

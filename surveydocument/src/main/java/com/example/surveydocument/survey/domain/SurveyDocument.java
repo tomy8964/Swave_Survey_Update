@@ -1,8 +1,5 @@
 package com.example.surveydocument.survey.domain;
 
-import com.example.surveydocument.survey.request.ChoiceRequestDto;
-import com.example.surveydocument.survey.request.QuestionRequestDto;
-import com.example.surveydocument.survey.request.SurveyRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
@@ -43,9 +40,11 @@ public class SurveyDocument {
     @Column(name = "is_deleted")
     private boolean isDeleted = Boolean.FALSE;
 
+    @Setter
     @OneToOne(mappedBy = "surveyDocument", cascade = CascadeType.ALL, orphanRemoval = true)
     private Design design;
 
+    @Setter
     @OneToOne(mappedBy = "surveyDocument", cascade = CascadeType.ALL, orphanRemoval = true)
     private DateManagement date;
 
@@ -56,47 +55,7 @@ public class SurveyDocument {
     @OneToMany(mappedBy = "surveyDocument", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionDocument> questionDocumentList = new ArrayList<>();
 
-    // 디자인 넣기
-    public void setDesign(Design design) {
-        this.design = design;
-    }
-
-    // 날짜 넣기
-    public void setDate(DateManagement date) {
-        this.date = date;
-    }
-
     public void addCountAnswer() {
         this.countAnswer++;
-    }
-
-    public Long updateSurvey(SurveyRequestDto requestDto) {
-        this.title = requestDto.getTitle();
-        this.description = requestDto.getDescription();
-        this.type = requestDto.getType();
-
-        // Question List 수정
-        // survey document 의 Question List 초기화
-        this.getQuestionDocumentList().clear();
-
-        for (QuestionRequestDto questionRequestDto : requestDto.getQuestionRequest()) {
-            QuestionDocument question = QuestionDocument.builder()
-                    .surveyDocument(this)
-                    .title(questionRequestDto.getTitle())
-                    .questionType(questionRequestDto.getType())
-                    .build();
-
-            if (questionRequestDto.getType() == 0) continue; // 주관식
-
-            // 객관식, 찬부식일 경우 선지 저장
-            for (ChoiceRequestDto choiceRequestDto : questionRequestDto.getChoiceList()) {
-                Choice.builder()
-                        .questionDocument(question)
-                        .title(choiceRequestDto.getChoiceName())
-                        .count(0)
-                        .build();
-            }
-        }
-        return this.id;
     }
 }

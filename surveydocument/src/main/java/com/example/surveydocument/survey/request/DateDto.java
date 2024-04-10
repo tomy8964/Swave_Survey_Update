@@ -12,6 +12,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DateDto {
-    Date startDate;
-    Date endDate;
+    private Date startDate;
+    private Date endDate;
+    private Boolean enable;
 }

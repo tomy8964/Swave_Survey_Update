@@ -18,8 +18,6 @@ public class SurveyRequestDto {
     private int type;
     private Boolean reliability;
     private DesignRequestDto design;
-    private Date startDate;
-    private Date endDate;
-    private Boolean enable;
+    private DateDto date;
     private List<QuestionRequestDto> questionRequest;
 }
