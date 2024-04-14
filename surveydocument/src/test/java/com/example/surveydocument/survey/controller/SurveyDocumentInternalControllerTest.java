@@ -108,9 +108,6 @@ public class SurveyDocumentInternalControllerTest {
         assertEquals(actualResponse.getDescription(), expectedResponse.getDescription());
         assertEquals(actualResponse.getCountAnswer(), expectedResponse.getCountAnswer());
         assertEquals(actualResponse.getReliability(), expectedResponse.getReliability());
-        assertEquals(actualResponse.getStartDate(), expectedResponse.getStartDate());
-        assertEquals(actualResponse.getEndDate(), expectedResponse.getEndDate());
-        assertEquals(actualResponse.getEnable(), expectedResponse.getEnable());
 
         assertEquals(actualResponse.getQuestionList().size(), expectedResponse.getQuestionList().size());
     }

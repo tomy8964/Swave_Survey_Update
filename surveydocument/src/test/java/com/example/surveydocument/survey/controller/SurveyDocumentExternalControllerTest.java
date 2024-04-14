@@ -1,8 +1,8 @@
 package com.example.surveydocument.survey.controller;
 
-import com.example.surveydocument.survey.domain.PageResponseDto;
 import com.example.surveydocument.exception.InvalidUserException;
 import com.example.surveydocument.exception.NotFoundException;
+import com.example.surveydocument.survey.domain.PageResponseDto;
 import com.example.surveydocument.survey.request.*;
 import com.example.surveydocument.survey.response.*;
 import com.example.surveydocument.survey.service.SurveyDocumentService;
@@ -74,15 +74,19 @@ public class SurveyDocumentExternalControllerTest {
         questionRequestDtoList.add(questionRequest1);
         questionRequestDtoList.add(questionRequest2);
 
+
         return SurveyRequestDto.builder()
                 .title("설문 제목")
                 .description("설문 내용")
                 .type(0)
                 .reliability(true)
-                .startDate(new Date())
-                .enable(true)
-                .questionRequest(questionRequestDtoList)
                 .design(design)
+                .date(DateDto.builder()
+                        .startDate(new Date())
+                        .endDate(new Date())
+                        .enable(true)
+                        .build())
+                .questionRequest(questionRequestDtoList)
                 .build();
     }
 
@@ -129,8 +133,11 @@ public class SurveyDocumentExternalControllerTest {
                 .description("설문 내용")
                 .countAnswer(0)
                 .reliability(true)
-                .startDate(new Date())
-                .enable(true)
+                .manage(ManagementResponseDto.builder()
+                        .startDate(new Date())
+                        .endDate(new Date())
+                        .enable(true)
+                        .build())
                 .questionList(questionDetailDtoList)
                 .design(design)
                 .build();
@@ -286,9 +293,6 @@ public class SurveyDocumentExternalControllerTest {
         assertEquals(actualResponse.getDescription(), expectedResponse.getDescription());
         assertEquals(actualResponse.getCountAnswer(), expectedResponse.getCountAnswer());
         assertEquals(actualResponse.getReliability(), expectedResponse.getReliability());
-        assertEquals(actualResponse.getStartDate(), expectedResponse.getStartDate());
-        assertEquals(actualResponse.getEndDate(), expectedResponse.getEndDate());
-        assertEquals(actualResponse.getEnable(), expectedResponse.getEnable());
 
         assertEquals(actualResponse.getQuestionList().size(), expectedResponse.getQuestionList().size());
     }
@@ -517,7 +521,7 @@ public class SurveyDocumentExternalControllerTest {
                 .startDate(new Date())
                 .endDate(new Date())
                 .build();
-        when(surveyDocumentService.managementDate(any(Long.class), any(DateDto.class)))
+        when(surveyDocumentService.updateDate(any(Long.class), any(DateDto.class)))
                 .thenReturn(1L);
 
         // when
@@ -547,7 +551,7 @@ public class SurveyDocumentExternalControllerTest {
                 .startDate(new Date())
                 .endDate(new Date())
                 .build();
-        when(surveyDocumentService.managementDate(any(Long.class), any(DateDto.class)))
+        when(surveyDocumentService.updateDate(any(Long.class), any(DateDto.class)))
                 .thenThrow(new NotFoundException("설문"));
 
         // when

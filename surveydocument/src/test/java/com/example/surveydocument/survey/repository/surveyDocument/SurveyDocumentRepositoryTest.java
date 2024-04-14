@@ -174,7 +174,7 @@ public class SurveyDocumentRepositoryTest {
         SurveyDocument saveSurvey = surveyDocumentRepository.save(surveyDocument);
 
         // when
-        SurveyDocument findSurvey = surveyDocumentRepository.findByIdToUpdate(saveSurvey.getId()).get();
+        SurveyDocument findSurvey = surveyDocumentRepository.findSurveyById(saveSurvey.getId()).get();
 
         // then
         assertEquals(saveSurvey.getId(), findSurvey.getId());

@@ -37,7 +37,7 @@ public class RestApiServiceTest {
     @Mock
     private ObjectMapper mapper;
     @InjectMocks
-    private RestApiService restApiService;
+    private RestApiServiceImpl restApiService;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -50,7 +50,7 @@ public class RestApiServiceTest {
                 .filter(WebClientConfig.logRequest())
                 .build();
         mapper = new ObjectMapper();
-        restApiService = new RestApiService(webClient, mapper);
+        restApiService = new RestApiServiceImpl(webClient);
     }
 
     @AfterEach

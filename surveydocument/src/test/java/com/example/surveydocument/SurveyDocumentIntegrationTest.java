@@ -588,9 +588,9 @@ public class SurveyDocumentIntegrationTest {
         });
 
         // then
-        assertEquals(surveyRequestDto.getEnable(), actualResponse.getEnable());
-        assertEquals(surveyRequestDto.getStartDate(), actualResponse.getStartDate());
-        assertEquals(surveyRequestDto.getEndDate(), actualResponse.getEndDate());
+        assertEquals(surveyRequestDto.getDate().getEnable(), actualResponse.getEnable());
+        assertEquals(surveyRequestDto.getDate().getStartDate(), actualResponse.getStartDate());
+        assertEquals(surveyRequestDto.getDate().getEndDate(), actualResponse.getEndDate());
     }
 
     /**

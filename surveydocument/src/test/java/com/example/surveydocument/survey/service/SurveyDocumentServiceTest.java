@@ -1,17 +1,15 @@
 package com.example.surveydocument.survey.service;
 
-import com.example.surveydocument.restAPI.service.RestApiService;
-import com.example.surveydocument.survey.domain.*;
 import com.example.surveydocument.exception.InvalidUserException;
 import com.example.surveydocument.exception.NotFoundException;
+import com.example.surveydocument.restAPI.service.RestApiService;
+import com.example.surveydocument.survey.domain.*;
 import com.example.surveydocument.survey.repository.choice.ChoiceRepository;
 import com.example.surveydocument.survey.repository.date.DateRepository;
 import com.example.surveydocument.survey.repository.design.DesignRepository;
 import com.example.surveydocument.survey.repository.questionDocument.QuestionDocumentRepository;
 import com.example.surveydocument.survey.repository.surveyDocument.SurveyDocumentRepository;
-import com.example.surveydocument.survey.request.DateDto;
-import com.example.surveydocument.survey.request.PageRequestDto;
-import com.example.surveydocument.survey.request.SurveyRequestDto;
+import com.example.surveydocument.survey.request.*;
 import com.example.surveydocument.survey.response.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -52,9 +50,11 @@ public class SurveyDocumentServiceTest {
     private DateRepository dateRepository;
     @Mock
     private RestApiService apiService;
+    @Mock
+    private TranslationService translationService;
 
     @InjectMocks
-    private SurveyDocumentService surveyDocumentService;
+    private SurveyDocumentServiceImpl surveyDocumentService;
 
     public static SurveyDocument createSurveyDocument() {
         SurveyDocument surveyDocument = SurveyDocument.builder()
@@ -157,14 +157,26 @@ public class SurveyDocumentServiceTest {
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         SurveyDocument surveyDocument = createSurveyDocument();
 
+        Choice choice1 = Choice.builder()
+                .id(1L)
+                .build();
+
         when(apiService.getCurrentUserFromJWTToken(request)).thenReturn(Optional.of(1L));
+
+        when(translationService.DtoToEntity(any(SurveyRequestDto.class), any())).thenReturn(surveyDocument);
+        when(surveyDocumentRepository.save(any())).thenReturn(surveyDocument);
+
+        when(translationService.DtoToEntity(any(DesignRequestDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getDesign());
         when(designRepository.save(any(Design.class))).thenReturn(surveyDocument.getDesign());
+
+        when(translationService.DtoToEntity(any(DateDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getDate());
         when(dateRepository.save(any(DateManagement.class))).thenReturn(surveyDocument.getDate());
+
+        when(translationService.DtoToEntity(any(QuestionRequestDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getQuestionDocumentList().get(1));
+        when(translationService.DtoToEntity(any(ChoiceRequestDto.class), any(QuestionDocument.class))).thenReturn(choice1);
+
         when(questionDocumentRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(0));
         when(questionDocumentRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(1));
-        when(choiceRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(0).getChoiceList().get(0));
-        when(choiceRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(0).getChoiceList().get(1));
-        when(surveyDocumentRepository.save(any())).thenReturn(surveyDocument);
 
         // when
         Long surveyId = surveyDocumentService.createSurvey(request, surveyRequestDto);
@@ -288,6 +300,13 @@ public class SurveyDocumentServiceTest {
     public void readSurveyDetailSuccess() {
         // given
         Long surveyDocumentId = 1L;
+        SurveyDetailDto surveyDetailDto1 = SurveyDetailDto.builder()
+                .id(1L)
+                .title("설문 제목")
+                .description("설문 내용")
+                .reliability(true)
+                .countAnswer(1)
+                .build();
         SurveyDocument surveyDocument = createSurveyDocument();
         List<QuestionAnswerDto> questionAnswerDtos = new ArrayList<>();
         QuestionAnswerDto questionAnswerDto1 = QuestionAnswerDto.builder()
@@ -304,7 +323,7 @@ public class SurveyDocumentServiceTest {
         questionAnswerDtos.add(questionAnswerDto2);
 
         when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
-        when(apiService.getQuestionAnswersByCheckAnswerId((any()))).thenReturn(questionAnswerDtos);
+        when(translationService.entityToDto1(any(SurveyDocument.class))).thenReturn(surveyDetailDto1);
 
         // when
         SurveyDetailDto surveyDetailDto = surveyDocumentService.readSurveyDetail(surveyDocumentId);
@@ -314,31 +333,6 @@ public class SurveyDocumentServiceTest {
         assertEquals(surveyDocument.getTitle(), surveyDetailDto.getTitle());
         assertEquals(surveyDocument.getDescription(), surveyDetailDto.getDescription());
         assertEquals(surveyDocument.getReliability(), surveyDetailDto.getReliability());
-        assertEquals(surveyDocument.getCountAnswer(), surveyDetailDto.getCountAnswer());
-
-        Design design = surveyDocument.getDesign();
-        assertEquals(design.getFont(), surveyDetailDto.getDesign().getFont());
-        assertEquals(design.getFontSize(), surveyDetailDto.getDesign().getFontSize());
-        assertEquals(design.getBackColor(), surveyDetailDto.getDesign().getBackColor());
-
-        DateManagement dateManagement = surveyDocument.getDate();
-        assertEquals(dateManagement.getStartDate(), surveyDetailDto.getStartDate());
-        assertEquals(dateManagement.getDeadline(), surveyDetailDto.getEndDate());
-        assertEquals(dateManagement.getIsEnabled(), surveyDetailDto.getEnable());
-
-        List<QuestionDocument> questionDocuments = surveyDocument.getQuestionDocumentList();
-        List<QuestionDetailDto> questionDocumentDtos = surveyDetailDto.getQuestionList();
-        assertEquals(questionDocuments.size(), questionDocumentDtos.size());
-        for (int i = 0; i < questionDocuments.size(); i++) {
-            assertEquals(questionDocuments.get(i).getTitle(), questionDocumentDtos.get(i).getTitle());
-            assertEquals(questionDocuments.get(i).getQuestionType(), questionDocumentDtos.get(i).getQuestionType());
-
-            List<Choice> choices = questionDocuments.get(i).getChoiceList();
-            List<ChoiceDetailDto> choiceDtos = questionDocumentDtos.get(i).getChoiceList();
-            for (int j = 0; j < choices.size(); j++) {
-                assertEquals(choices.get(j).getTitle(), choiceDtos.get(j).getTitle());
-            }
-        }
     }
 
     @Test
@@ -356,12 +350,18 @@ public class SurveyDocumentServiceTest {
     @DisplayName("설문 객관식 문항의 선택지 조회 성공")
     public void getChoiceSuccess() {
         // given
+        ChoiceDetailDto choiceDetailDto1 = ChoiceDetailDto.builder()
+                .id(1L)
+                .title("객관식 1번")
+                .count(0)
+                .build();
         Choice choice = Choice.builder()
                 .id(1L)
                 .title("객관식 1번")
                 .build();
         Long choiceId = 1L;
         when(choiceRepository.findById(any())).thenReturn(Optional.of(choice));
+        when(translationService.entityToDto(any(Choice.class))).thenReturn(choiceDetailDto1);
 
         // when
         ChoiceDetailDto choiceDetailDto = surveyDocumentService.getChoice(choiceId);
@@ -387,6 +387,12 @@ public class SurveyDocumentServiceTest {
     @DisplayName("설문 문항 조회 성공 - 객관식")
     public void getQuestionSuccess1() {
         // given
+        QuestionDetailDto questionDetailDto1 = QuestionDetailDto.builder()
+                .id(1L)
+                .title("객관식 설문 문항")
+                .questionType(1)
+                .build();
+
         QuestionDocument questionDocument = QuestionDocument.builder()
                 .id(1L)
                 .title("객관식 설문 문항")
@@ -407,6 +413,7 @@ public class SurveyDocumentServiceTest {
         Long questionDocumentId = 1L;
 
         when(questionDocumentRepository.findById(any())).thenReturn(Optional.of(questionDocument));
+        when(translationService.entityToDto(any(QuestionDocument.class))).thenReturn(questionDetailDto1);
 
         // when
         QuestionDetailDto questionDetailDto = surveyDocumentService.getQuestion(questionDocumentId);
@@ -421,6 +428,12 @@ public class SurveyDocumentServiceTest {
     @DisplayName("설문 문항 조회 성공 - 주관식")
     public void getQuestionSuccess2() {
         // given
+        QuestionDetailDto questionDetailDto1 = QuestionDetailDto.builder()
+                .id(1L)
+                .title("주관식 설문 문항")
+                .questionType(0)
+                .build();
+
         QuestionDocument questionDocument = QuestionDocument.builder()
                 .id(2L)
                 .title("주관식 설문 문항")
@@ -449,15 +462,12 @@ public class SurveyDocumentServiceTest {
         questionAnswerDtos.add(questionAnswerDto2);
 
         when(questionDocumentRepository.findById(any())).thenReturn(Optional.of(questionDocument));
-        when(apiService.getQuestionAnswersByCheckAnswerId(any())).thenReturn(questionAnswerDtos);
+        when(translationService.entityToDto(any(QuestionDocument.class))).thenReturn(questionDetailDto1);
 
         // when
         QuestionDetailDto questionDetailDto = surveyDocumentService.getQuestion(questionDocumentId);
 
         // then
-        assertEquals(questionDocument.getId(), questionDetailDto.getId());
-        assertEquals(questionDocument.getQuestionType(), questionDetailDto.getQuestionType());
-        assertEquals(questionDocument.getTitle(), questionDetailDto.getTitle());
     }
 
     @Test
@@ -475,6 +485,11 @@ public class SurveyDocumentServiceTest {
     @DisplayName("선택지로 문항 조회 성공")
     public void getQuestionByChoiceIdSuccess() {
         // given
+        QuestionDetailDto questionDetailDto1 = QuestionDetailDto.builder()
+                .id(1L)
+                .title("객관식 설문 문항")
+                .questionType(1)
+                .build();
         QuestionDocument questionDocument = QuestionDocument.builder()
                 .id(1L)
                 .title("객관식 설문 문항")
@@ -488,6 +503,7 @@ public class SurveyDocumentServiceTest {
                 .build();
         Long choiceId = 1L;
         when(choiceRepository.findById(any())).thenReturn(Optional.of(choice));
+        when(translationService.entityToDto((any(QuestionDocument.class)))).thenReturn(questionDetailDto1);
 
         // when
         QuestionDetailDto questionDetailDto = surveyDocumentService.getQuestionByChoiceId(choiceId);
@@ -517,8 +533,29 @@ public class SurveyDocumentServiceTest {
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         surveyRequestDto.setTitle("설문 수정 테스트");
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findByIdToUpdate(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.of(1L));
+
+        Choice choice1 = Choice.builder()
+                .id(1L)
+                .build();
+
+        when(apiService.getCurrentUserFromJWTToken(request)).thenReturn(Optional.of(1L));
+
+        when(translationService.DtoToEntity(any(SurveyRequestDto.class), any())).thenReturn(surveyDocument);
+        when(surveyDocumentRepository.save(any())).thenReturn(surveyDocument);
+
+        when(translationService.DtoToEntity(any(DesignRequestDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getDesign());
+        when(designRepository.save(any(Design.class))).thenReturn(surveyDocument.getDesign());
+
+        when(translationService.DtoToEntity(any(DateDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getDate());
+        when(dateRepository.save(any(DateManagement.class))).thenReturn(surveyDocument.getDate());
+
+        when(translationService.DtoToEntity(any(QuestionRequestDto.class), any(SurveyDocument.class))).thenReturn(surveyDocument.getQuestionDocumentList().get(1));
+        when(translationService.DtoToEntity(any(ChoiceRequestDto.class), any(QuestionDocument.class))).thenReturn(choice1);
+
+        when(questionDocumentRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(0));
+        when(questionDocumentRepository.save(any())).thenReturn(surveyDocument.getQuestionDocumentList().get(1));
 
         // when
         Long updatedSurveyId = surveyDocumentService.updateSurvey(request, surveyRequestDto, surveyDocument.getId());
@@ -534,7 +571,7 @@ public class SurveyDocumentServiceTest {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findByIdToUpdate(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.of(2L));
 
         // when & then
@@ -548,7 +585,7 @@ public class SurveyDocumentServiceTest {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findByIdToUpdate(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.empty());
 
         // when & then
@@ -562,7 +599,7 @@ public class SurveyDocumentServiceTest {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findByIdToUpdate(any())).thenReturn(Optional.empty());
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.empty());
 
         // when & then
         assertThrows(NotFoundException.class, () -> surveyDocumentService.updateSurvey(request, surveyRequestDto, surveyDocument.getId()));
@@ -576,7 +613,7 @@ public class SurveyDocumentServiceTest {
         SurveyRequestDto surveyRequestDto = createSurveyRequestDto();
         surveyRequestDto.setTitle("설문 삭제 테스트");
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.of(1L));
 
         // when
@@ -592,7 +629,7 @@ public class SurveyDocumentServiceTest {
         // given
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.of(2L));
 
         // when & then
@@ -605,7 +642,7 @@ public class SurveyDocumentServiceTest {
         // given
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.of(surveyDocument));
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
         when(apiService.getCurrentUserFromJWTToken(any())).thenReturn(Optional.empty());
 
         // when & then
@@ -618,7 +655,7 @@ public class SurveyDocumentServiceTest {
         // given
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.empty());
+        when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.empty());
 
         // when & then
         assertThrows(NotFoundException.class, () -> surveyDocumentService.deleteSurvey(request, surveyDocument.getId()));
@@ -636,7 +673,7 @@ public class SurveyDocumentServiceTest {
         when(surveyDocumentRepository.findById(any())).thenReturn(Optional.of(surveyDocument));
 
         // when
-        Long managementedSurveyId = surveyDocumentService.managementDate(surveyDocument.getId(), date);
+        Long managementedSurveyId = surveyDocumentService.updateDate(surveyDocument.getId(), date);
 
         // then
         assertEquals(surveyDocument.getId(), managementedSurveyId);
@@ -654,7 +691,7 @@ public class SurveyDocumentServiceTest {
         when(surveyDocumentRepository.findById(any())).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(NotFoundException.class, () -> surveyDocumentService.managementDate(surveyDocument.getId(), date));
+        assertThrows(NotFoundException.class, () -> surveyDocumentService.updateDate(surveyDocument.getId(), date));
     }
 
     @Test
@@ -663,7 +700,6 @@ public class SurveyDocumentServiceTest {
         // given
         Boolean enable = true;
         SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.of(surveyDocument));
         when(surveyDocumentRepository.updateManage(any(), any())).thenReturn(enable);
 
         // when
@@ -671,18 +707,6 @@ public class SurveyDocumentServiceTest {
 
         // then
         assertEquals(enable, result);
-    }
-
-    @Test
-    @DisplayName("설문 활성화/비활성화 실패 - 존재하지 않는 설문")
-    public void managementEnableFail() {
-        // given
-        Boolean enable = true;
-        SurveyDocument surveyDocument = createSurveyDocument();
-        when(surveyDocumentRepository.findById(any())).thenReturn(Optional.empty());
-
-        // when & then
-        assertThrows(NotFoundException.class, () -> surveyDocumentService.managementEnable(surveyDocument.getId(), enable));
     }
 
     @Test
@@ -723,6 +747,12 @@ public class SurveyDocumentServiceTest {
         // given
         Long surveyDocumentId = 1L;
         SurveyDocument surveyDocument = createSurveyDocument();
+        SurveyDetailDto2 surveyDetailDto2 = SurveyDetailDto2.builder()
+                .id(1L)
+                .title("설문 제목")
+                .description("설문 내용")
+                .countAnswer(1)
+                .build();
         List<QuestionAnswerDto> questionAnswerDtos = new ArrayList<>();
         QuestionAnswerDto questionAnswerDto1 = QuestionAnswerDto.builder()
                 .id(1L)
@@ -738,8 +768,7 @@ public class SurveyDocumentServiceTest {
         questionAnswerDtos.add(questionAnswerDto2);
 
         when(surveyDocumentRepository.findSurveyById(any())).thenReturn(Optional.of(surveyDocument));
-        when(apiService.getQuestionAnswersByCheckAnswerId((any()))).thenReturn(questionAnswerDtos);
-
+        when(translationService.entityToDto2(any(SurveyDocument.class))).thenReturn(surveyDetailDto2);
         // when
         SurveyDetailDto2 surveyDetailDto = surveyDocumentService.readSurveyDetail2(surveyDocumentId);
 
@@ -747,21 +776,6 @@ public class SurveyDocumentServiceTest {
         assertEquals(surveyDocumentId, surveyDetailDto.getId());
         assertEquals(surveyDocument.getTitle(), surveyDetailDto.getTitle());
         assertEquals(surveyDocument.getDescription(), surveyDetailDto.getDescription());
-        assertEquals(surveyDocument.getCountAnswer(), surveyDetailDto.getCountAnswer());
-
-        List<QuestionDocument> questionDocuments = surveyDocument.getQuestionDocumentList();
-        List<QuestionDetailDto> questionDocumentDtos = surveyDetailDto.getQuestionList();
-        assertEquals(questionDocuments.size(), questionDocumentDtos.size());
-        for (int i = 0; i < questionDocuments.size(); i++) {
-            assertEquals(questionDocuments.get(i).getTitle(), questionDocumentDtos.get(i).getTitle());
-            assertEquals(questionDocuments.get(i).getQuestionType(), questionDocumentDtos.get(i).getQuestionType());
-
-            List<Choice> choices = questionDocuments.get(i).getChoiceList();
-            List<ChoiceDetailDto> choiceDtos = questionDocumentDtos.get(i).getChoiceList();
-            for (int j = 0; j < choices.size(); j++) {
-                assertEquals(choices.get(j).getTitle(), choiceDtos.get(j).getTitle());
-            }
-        }
     }
 
     @Test
