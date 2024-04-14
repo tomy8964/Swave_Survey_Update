@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,52 +18,38 @@ public class TranslationServiceImpl implements TranslationService {
 
     @Override
     public QuestionDetailDto entityToDto(QuestionDocument questionDocument) {
-        QuestionDetailDto questionDto = new QuestionDetailDto();
-        questionDto.setId(questionDocument.getId());
-        questionDto.setTitle(questionDocument.getTitle());
-        questionDto.setQuestionType(questionDocument.getQuestionType());
-
-        questionDto.setChoiceList(getChoiceDetailDtos(questionDocument));
-        questionDto.setWordCloudDtos(getWordCloudDtos(questionDocument));
-
-        return questionDto;
+        return QuestionDetailDto.builder()
+                .id(questionDocument.getId())
+                .title(questionDocument.getTitle())
+                .questionType(questionDocument.getQuestionType())
+                .choiceList(getChoiceDetailDtos(questionDocument))
+                .wordCloudDtos(getWordCloudDtos(questionDocument))
+                .build();
     }
 
     @NotNull
     private List<WordCloudDto> getWordCloudDtos(QuestionDocument questionDocument) {
-        List<WordCloudDto> wordCloudDtos = new ArrayList<>();
-        for (WordCloud wordCloud : questionDocument.getWordCloudList()) {
-            wordCloudDtos.add(entityToDto(wordCloud));
-        }
-        return wordCloudDtos;
+        return questionDocument.getWordCloudList().stream().map(this::entityToDto).toList();
     }
 
     @NotNull
     private List<ChoiceDetailDto> getChoiceDetailDtos(QuestionDocument questionDocument) {
-        // question type에 따라 choice 에 들어갈 내용 구분
-        // 주관식이면 choice title에 주관식 응답을 저장
-        // 객관식 찬부식 -> 기존 방식 과 똑같이 count를 올려서 저장
-        List<ChoiceDetailDto> choiceDtos = new ArrayList<>();
         if (questionDocument.getQuestionType() == 0) {
-            // 주관식 답변들 리스트
-            // REST API GET questionAnswersByCheckAnswerId
-            List<QuestionAnswerDto> questionAnswerList = apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId());
-            for (QuestionAnswerDto questionAnswer : questionAnswerList) {
-                // 그 중에 주관식 답변만
-                if (questionAnswer.getQuestionType() == 0) {
-                    choiceDtos.add(entityToDto(Choice.builder()
+            // 주관식 처리
+            return apiService.getQuestionAnswersByCheckAnswerId(questionDocument.getId()).stream()
+                    .filter(questionAnswer -> questionAnswer.getQuestionType() == 0)
+                    .map(questionAnswer -> entityToDto(Choice.builder()
                             .questionDocument(questionDocument)
                             .title(questionAnswer.getCheckAnswer())
                             .count(0)
-                            .build()));
-                }
-            }
+                            .build()))
+                    .collect(Collectors.toList());
         } else {
-            for (Choice choice : questionDocument.getChoiceList()) {
-                choiceDtos.add(entityToDto(choice));
-            }
+            // 객관식 또는 찬반식 처리
+            return questionDocument.getChoiceList().stream()
+                    .map(this::entityToDto)
+                    .collect(Collectors.toList());
         }
-        return choiceDtos;
     }
 
     @Override
@@ -177,10 +163,6 @@ public class TranslationServiceImpl implements TranslationService {
 
     @NotNull
     private List<QuestionDetailDto> getQuestionDetailDtos(SurveyDocument surveyDocument) {
-        List<QuestionDetailDto> questionDtos = new ArrayList<>();
-        for (QuestionDocument questionDocument : surveyDocument.getQuestionDocumentList()) {
-            questionDtos.add(entityToDto(questionDocument));
-        }
-        return questionDtos;
+        return surveyDocument.getQuestionDocumentList().stream().map(this::entityToDto).toList();
     }
 }
