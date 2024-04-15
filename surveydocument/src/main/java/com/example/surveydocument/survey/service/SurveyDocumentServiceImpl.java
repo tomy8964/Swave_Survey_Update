@@ -51,6 +51,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * forEach는 순차적으로 처리하기 때문에 순서가 보장됨
      * 데이터 베이스에 저장할 때 순서가 보장되어야 하기 때문에 forEach를 사용
      */
+    @Override
     @Transactional
     public Long createSurvey(HttpServletRequest request, SurveyRequestDto surveyRequest) {
         Long userId = getCurrentUserId(request);
@@ -81,6 +82,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @throws NotFoundException    수정할 설문이 없을 경우
      * @throws InvalidUserException 수정할 권한이 없을 경우
      */
+    @Override
     @Transactional
     public Long updateSurvey(HttpServletRequest request, SurveyRequestDto requestDto, Long surveyId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyId)
@@ -98,6 +100,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @param request2 페이지네이션 정보가 담긴 Request
      * @return Page 조회 후 반환
      */
+    @Override
     public Page<SurveyPageDto> readSurveyList(HttpServletRequest request1, PageRequestDto request2) {
         return surveyDocumentRepository.pagingSurvey(
                 getCurrentUserId(request1),
@@ -114,6 +117,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 선택지 ID
      * @throws NotFoundException 선택지가 없을 경우
      */
+    @Override
     @Transactional
     public Long countChoice(Long choiceId) {
         choiceRepository.findById(choiceId)
@@ -129,6 +133,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 응답자 수 증가된 설문의 ID 재반환
      * @throws NotFoundException 설문이 없을 경우
      */
+    @Override
     @Transactional
     public Long countSurveyDocument(Long surveyDocumentId) {
         surveyDocumentRepository.findById(surveyDocumentId)
@@ -144,6 +149,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 설문 상세 조회 결과
      * @throws NotFoundException 설문이 없을 경우
      */
+    @Override
     public SurveyDetailDto readSurveyDetail(Long surveyDocumentId) {
         return translationService.entityToDto1(
                 surveyDocumentRepository.findSurveyById(surveyDocumentId)
@@ -157,6 +163,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 선택지 상세 조회 결과
      * @throws NotFoundException 선택지가 없을 경우
      */
+    @Override
     public ChoiceDetailDto getChoice(Long choiceId) {
         return translationService.entityToDto(
                 choiceRepository.findById(choiceId)
@@ -170,6 +177,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 문항 상세 조회 결과
      * @throws NotFoundException 문항이 없을 경우
      */
+    @Override
     public QuestionDetailDto getQuestion(Long questionId) {
         return translationService.entityToDto(
                 questionDocumentRepository.findById(questionId)
@@ -183,6 +191,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 선택지로 조회된 문항 상세 조회 결과
      * @throws NotFoundException 문항이 없을 경우
      */
+    @Override
     public QuestionDetailDto getQuestionByChoiceId(Long choiceId) {
         return translationService.entityToDto(
                 choiceRepository.findById(choiceId)
@@ -202,6 +211,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @throws NotFoundException    삭제할 설문이 없을 경우
      * @throws InvalidUserException 삭제할 권한이 없을 경우
      */
+    @Override
     @Transactional
     public Long deleteSurvey(HttpServletRequest request, Long surveyId) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findSurveyById(surveyId)
@@ -221,6 +231,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 수정된 설문 ID
      * @throws NotFoundException 설문이 없을 경우
      */
+    @Override
     @Transactional
     public Long updateDate(Long surveyDocumentId, DateDto request) {
         SurveyDocument surveyDocument = surveyDocumentRepository.findById(surveyDocumentId)
@@ -236,6 +247,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @param enable 활성화 여부
      * @return 활성화 여부
      */
+    @Override
     @Transactional
     public Boolean managementEnable(Long id, Boolean enable) {
         return surveyDocumentRepository.updateManage(id, enable);
@@ -248,6 +260,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 설문 관리 조회 결과
      * @throws NotFoundException 설문이 없을 경우
      */
+    @Override
     public ManagementResponseDto managementSurvey(Long id) {
         return surveyDocumentRepository.findManageById(id)
                 .orElseThrow(() -> new NotFoundException("설문"));
@@ -260,6 +273,7 @@ public class SurveyDocumentServiceImpl implements SurveyDocumentService {
      * @return 설문 상세 조회 결과
      * @throws NotFoundException 설문이 없을 경우
      */
+    @Override
     public SurveyDetailDto2 readSurveyDetail2(Long surveyDocumentId) {
         return translationService.entityToDto2(surveyDocumentRepository.findSurveyById(surveyDocumentId)
                 .orElseThrow(() -> new NotFoundException("설문")));
