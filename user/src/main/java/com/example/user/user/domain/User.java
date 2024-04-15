@@ -65,15 +65,4 @@ public class User {
         this.isDeleted = isDeleted;
     }
 
-    public UserDto toUserDto(User user) {
-        return UserDto.builder()
-                .profileImgUrl(user.getProfileImgUrl())
-                .nickname(user.getNickname())
-                .email(user.getEmail())
-                .provider(user.getProvider())
-                .userRole(user.getUserRole())
-                .description(user.getDescription())
-                .createTime(user.getCreateTime())
-                .build();
-    }
 }

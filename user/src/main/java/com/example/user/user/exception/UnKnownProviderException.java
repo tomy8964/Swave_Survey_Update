@@ -6,4 +6,8 @@ public class UnKnownProviderException extends RuntimeException {
     public UnKnownProviderException(Throwable cause) {
         super(MESSAGE, cause);
     }
+
+    public UnKnownProviderException() {
+        super(MESSAGE);
+    }
 }

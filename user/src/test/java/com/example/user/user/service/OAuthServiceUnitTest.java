@@ -1,16 +1,10 @@
 package com.example.user.user.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.example.user.user.domain.User;
-import com.example.user.user.domain.UserRole;
 import com.example.user.user.exception.JsonParsingException;
 import com.example.user.user.exception.UnKnownProviderException;
-import com.example.user.user.exception.UserNotFoundException;
 import com.example.user.user.repository.UserRepository;
-import com.example.user.util.oAuth.JwtProperties;
 import com.example.user.util.oAuth.OauthToken;
-import com.example.user.util.oAuth.provider.Provider;
+import com.example.user.util.oAuth.profile.Profile;
 import com.example.user.util.web.WebClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
@@ -26,14 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.CoreSubscriber;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +51,7 @@ public class OAuthServiceUnitTest {
                 .baseUrl(baseUrl)
                 .filter(WebClientConfig.logRequest())
                 .build();
-        oAuthService = new OAuthService(userRepository, webClient, mapper);
+        oAuthService = new OAuthService(webClient, mapper);
     }
 
     @AfterEach
@@ -77,7 +70,7 @@ public class OAuthServiceUnitTest {
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
         // when
-        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider);
+        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider).block();
 
         // then
         assertEquals("test_access", oauthToken.getAccess_token());
@@ -99,7 +92,7 @@ public class OAuthServiceUnitTest {
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
         // when
-        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider);
+        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider).block();
 
         // then
         assertEquals("test_access", oauthToken.getAccess_token());
@@ -121,7 +114,7 @@ public class OAuthServiceUnitTest {
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
         // when
-        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider);
+        OauthToken oauthToken = oAuthService.getOAuthToken(code, stringProvider).block();
 
         // then
         assertEquals("test_access", oauthToken.getAccess_token());
@@ -157,12 +150,12 @@ public class OAuthServiceUnitTest {
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
 
         // when & then
-        assertThrows(JsonParsingException.class, () -> oAuthService.getOAuthToken(code, stringProvider));
+        assertThrows(JsonParsingException.class, () -> oAuthService.getOAuthToken(code, stringProvider).block());
     }
 
     @Test
-    @DisplayName("OAuthToken으로 유저 신규 가입 성공 - git")
-    void saveUser1() {
+    @DisplayName("OAuthToken으로 유저 정보 조회 - git")
+    void getProfile1() {
         // given
         String stringProvider = "git";
         OauthToken testToken = OauthToken.builder()
@@ -173,33 +166,28 @@ public class OAuthServiceUnitTest {
                 .scope("test_scope")
                 .refresh_token_expires_in(7200)
                 .build();
-        String gitProfileMockResponse = "{ \"name\": \"mock_name\", \"avatar_url\": \"mock_picture\" }";
-
-        User user = User.builder()
-                .id(1L)
-                .profileImgUrl("mock_picture")
-                .nickname("mock_name")
-                .email("mock_email")
-                .provider(Provider.GIT)
-                .userRole(UserRole.USER)
-                .description("joinBy" + "git")
-                .build();
+        Mono<OauthToken> mono = new Mono<>() {
+            @Override
+            public void subscribe(CoreSubscriber<? super OauthToken> actual) {
+                actual.onNext(testToken);
+            }
+        };
+        String gitProfileMockResponse = "{ \"name\": \"mock_name\", \"picture\": \"mock_picture\" }";
 
         mockBackEnd.enqueue(new MockResponse().setBody(gitProfileMockResponse)
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-        when(userRepository.findByEmailAndProvider(any(), any())).thenReturn(Optional.empty());
-        when(userRepository.save(any())).thenReturn(user);
 
         // when
-        Long savedUserId = oAuthService.saveUser(testToken, stringProvider);
+        Profile profile = oAuthService.getProfile(mono, stringProvider).block();
 
         // then
-        assertEquals(1L, savedUserId);
+        assertEquals(profile.getName(), "mock_name");
+        assertEquals(profile.getPicture(), "mock_picture");
     }
 
     @Test
-    @DisplayName("OAuthToken으로 유저 신규 가입 성공 - kakao")
-    void saveUser2() {
+    @DisplayName("OAuthToken으로 유저 정보 조회 - kakao")
+    void getProfile2() {
         // given
         String stringProvider = "kakao";
         OauthToken testToken = OauthToken.builder()
@@ -210,35 +198,30 @@ public class OAuthServiceUnitTest {
                 .scope("test_scope")
                 .refresh_token_expires_in(7200)
                 .build();
+        Mono<OauthToken> mono = new Mono<>() {
+            @Override
+            public void subscribe(CoreSubscriber<? super OauthToken> actual) {
+                actual.onNext(testToken);
+            }
+        };
         String kakaoProfileMockResponse = "{ \"id\": 1, \"connectedAt\": \"2022-01-01T00:00:00Z\", " +
                 "\"properties\": { \"nickname\": \"mock_name\", \"profile_image\": \"mock_picture\" }, " +
                 "\"kakaoAccount\": { \"email\": \"mock_email\", \"profile\": { \"nickname\": \"mock_name\", \"profile_image_url\": \"mock_picture\" } } }";
 
-        User user = User.builder()
-                .id(1L)
-                .profileImgUrl("mock_picture")
-                .nickname("mock_name")
-                .email("mock_email")
-                .provider(Provider.GIT)
-                .userRole(UserRole.USER)
-                .description("joinBy" + "git")
-                .build();
-
         mockBackEnd.enqueue(new MockResponse().setBody(kakaoProfileMockResponse)
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-        when(userRepository.findByEmailAndProvider(any(), any())).thenReturn(Optional.empty());
-        when(userRepository.save(any())).thenReturn(user);
 
         // when
-        Long savedUserId = oAuthService.saveUser(testToken, stringProvider);
+        Profile profile = oAuthService.getProfile(mono, stringProvider).block();
 
         // then
-        assertEquals(1L, savedUserId);
+        assertEquals(profile.getName(), "mock_name");
+        assertEquals(profile.getPicture(), "mock_picture");
     }
 
     @Test
-    @DisplayName("OAuthToken으로 유저 신규 가입 성공 - google")
-    void saveUser3() {
+    @DisplayName("OAuthToken으로 유저 정보 조회 - google")
+    void getProfile3() {
         // given
         String stringProvider = "google";
         OauthToken testToken = OauthToken.builder()
@@ -249,137 +232,22 @@ public class OAuthServiceUnitTest {
                 .scope("test_scope")
                 .refresh_token_expires_in(7200)
                 .build();
+        Mono<OauthToken> mono = new Mono<>() {
+            @Override
+            public void subscribe(CoreSubscriber<? super OauthToken> actual) {
+                actual.onNext(testToken);
+            }
+        };
         String googleProfileMockResponse = "{ \"name\": \"mock_name\", \"avatar_url\": \"mock_picture\" }";
-
-        User user = User.builder()
-                .id(1L)
-                .profileImgUrl("mock_picture")
-                .nickname("mock_name")
-                .email("mock_email")
-                .provider(Provider.GIT)
-                .userRole(UserRole.USER)
-                .description("joinBy" + "git")
-                .build();
 
         mockBackEnd.enqueue(new MockResponse().setBody(googleProfileMockResponse)
                 .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-        when(userRepository.findByEmailAndProvider(any(), any())).thenReturn(Optional.empty());
-        when(userRepository.save(any())).thenReturn(user);
 
         // when
-        Long savedUserId = oAuthService.saveUser(testToken, stringProvider);
+        Profile profile = oAuthService.getProfile(mono, stringProvider).block();
 
         // then
-        assertEquals(1L, savedUserId);
-    }
-
-    @Test
-    @DisplayName("OAuthToken으로 기존 유저 로그인 성공")
-    void loginUser() {
-        // given
-        String stringProvider = "google";
-        OauthToken testToken = OauthToken.builder()
-                .access_token("test_access")
-                .token_type("test_type")
-                .refresh_token("test_refresh")
-                .expires_in(3600)
-                .scope("test_scope")
-                .refresh_token_expires_in(7200)
-                .build();
-        String googleProfileMockResponse = "{ \"name\": \"mock_name\", \"avatar_url\": \"mock_picture\" }";
-
-        User user = User.builder()
-                .id(1L)
-                .profileImgUrl("mock_picture")
-                .nickname("mock_name")
-                .email("mock_email")
-                .provider(Provider.GIT)
-                .userRole(UserRole.USER)
-                .description("joinBy" + "git")
-                .build();
-
-        mockBackEnd.enqueue(new MockResponse().setBody(googleProfileMockResponse)
-                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-        when(userRepository.findByEmailAndProvider(any(), any())).thenReturn(Optional.of(user));
-
-        // when
-        Long savedUserId = oAuthService.saveUser(testToken, stringProvider);
-
-        // then
-        assertEquals(1L, savedUserId);
-    }
-
-    @Test
-    @DisplayName("OAuthToken으로 기존 유저 로그인 실패 - 알 수 없는 Provider")
-    void saveUserFail1() {
-        // given
-        String stringProvider = "test_provider";
-        OauthToken testToken = OauthToken.builder()
-                .access_token("test_access")
-                .token_type("test_type")
-                .refresh_token("test_refresh")
-                .expires_in(3600)
-                .scope("test_scope")
-                .refresh_token_expires_in(7200)
-                .build();
-
-        // when & then
-        assertThrows(UnKnownProviderException.class, () -> oAuthService.saveUser(testToken, stringProvider));
-    }
-
-    @Test
-    @DisplayName("OAuthToken으로 기존 유저 로그인 실패 - JSON 파싱 실패")
-    void saveUserFail2() {
-        String stringProvider = "git";
-        OauthToken testToken = OauthToken.builder()
-                .access_token("test_access")
-                .token_type("test_type")
-                .refresh_token("test_refresh")
-                .expires_in(3600)
-                .scope("test_scope")
-                .refresh_token_expires_in(7200)
-                .build();
-        String gitProfileMockResponse = "Invalid JSON String";
-
-        mockBackEnd.enqueue(new MockResponse().setBody(gitProfileMockResponse)
-                .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-
-        // when & then
-        assertThrows(JsonParsingException.class, () -> oAuthService.saveUser(testToken, stringProvider));
-    }
-
-    @Test
-    @DisplayName("JWT 토큰 생성 성공")
-    void createJWTTokenSuccess() {
-        // given
-        User user = User.builder()
-                .id(1L)
-                .profileImgUrl("mock_picture")
-                .nickname("mock_name")
-                .email("mock_email")
-                .provider(Provider.GIT)
-                .userRole(UserRole.USER)
-                .description("joinBy" + "git")
-                .build();
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
-
-        // when
-        String jwtToken = oAuthService.createJWTToken(user.getId());
-        Long id = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("id").asLong();
-        String nickname = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("nickname").asString();
-
-        // then
-        assertEquals(user.getNickname(), nickname);
-        assertEquals(user.getId(), id);
-    }
-
-    @Test
-    @DisplayName("JWT 토큰 생성 실패 - 존재 하지 않는 유저")
-    void createJWTTokenFail() {
-        // given
-        when(userRepository.findById(any())).thenReturn(Optional.empty());
-
-        // when & then
-        assertThrows(UserNotFoundException.class, () -> oAuthService.createJWTToken(2L));
+        assertEquals(profile.getName(), "mock_name");
+        assertEquals(profile.getPicture(), "mock_picture");
     }
 }

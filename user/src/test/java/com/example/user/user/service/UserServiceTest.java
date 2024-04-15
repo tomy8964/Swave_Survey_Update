@@ -4,8 +4,8 @@ import com.example.user.user.domain.User;
 import com.example.user.user.repository.UserRepository;
 import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.user.response.UserDto;
-import com.example.user.util.oAuth.JwtProperties;
-import com.example.user.util.oAuth.provider.Provider;
+import com.example.user.util.oAuth.provider.Google;
+import com.example.user.util.oAuth.provider.Kakao;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.DisplayName;
@@ -37,11 +37,11 @@ public class UserServiceTest {
         // given
         User firstUser = User.builder()
                 .email("sample@example.com")
-                .provider(Provider.KAKAO)
+                .provider(new Kakao())
                 .build();
 
         User savedUser = userRepository.save(firstUser);
-        String jwtToken = oAuthService.createJWTToken(savedUser.getId());
+        String jwtToken = userService.createJWTToken(savedUser);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
@@ -63,12 +63,12 @@ public class UserServiceTest {
                 .nickname("savedUser")
                 .description("saved 유저입니다.")
                 .email("sample@example.com")
-                .provider(Provider.KAKAO)
+                .provider(new Kakao())
                 .build();
         User savedUser = userRepository.save(firstUser);
         em.flush();
         em.clear();
-        String jwtToken = oAuthService.createJWTToken(savedUser.getId());
+        String jwtToken = userService.createJWTToken(savedUser);
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
@@ -96,10 +96,10 @@ public class UserServiceTest {
                 .nickname("savedUser")
                 .description("saved 유저입니다.")
                 .email("sample@example.com")
-                .provider(Provider.GOOGLE)
+                .provider(new Google())
                 .build();
         User savedUser = userRepository.save(firstUser);
-        String jwtToken = oAuthService.createJWTToken(savedUser.getId());
+        String jwtToken = userService.createJWTToken(savedUser);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 

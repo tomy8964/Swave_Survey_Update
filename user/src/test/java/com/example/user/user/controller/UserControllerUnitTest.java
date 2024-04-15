@@ -4,8 +4,7 @@ import com.example.user.user.domain.UserRole;
 import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.user.response.UserDto;
 import com.example.user.user.service.UserService;
-import com.example.user.util.oAuth.JwtProperties;
-import com.example.user.util.oAuth.provider.Provider;
+import com.example.user.util.oAuth.provider.Kakao;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -75,7 +74,7 @@ public class UserControllerUnitTest {
                 .profileImgUrl("http://example.com/profile.jpg")
                 .nickname("Test Nickname")
                 .email("test@example.com")
-                .provider(Provider.KAKAO)
+                .provider(new Kakao())
                 .userRole(UserRole.USER)
                 .description("Test Description")
                 .createTime(new Timestamp(30))
