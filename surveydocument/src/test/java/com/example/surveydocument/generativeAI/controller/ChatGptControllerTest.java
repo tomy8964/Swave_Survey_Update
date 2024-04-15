@@ -1,9 +1,8 @@
-package com.example.surveydocument.chatGPT.controller;
+package com.example.surveydocument.generativeAI.controller;
 
-import com.example.surveydocument.chatGPT.request.ChatGptQuestionRequestDto;
-import com.example.surveydocument.chatGPT.request.ChatResultDto;
-import com.example.surveydocument.chatGPT.sevice.ChatGptService;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.example.surveydocument.generativeAI.request.ChatGptQuestionRequestDto;
+import com.example.surveydocument.generativeAI.request.ChatResultDto;
+import com.example.surveydocument.generativeAI.sevice.ChatGptService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

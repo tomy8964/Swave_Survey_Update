@@ -1,4 +1,4 @@
-package com.example.surveydocument.chatGPT.request;
+package com.example.surveydocument.generativeAI.request;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;

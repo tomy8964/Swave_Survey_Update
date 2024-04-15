@@ -1,4 +1,4 @@
-package com.example.surveydocument.chatGPT.request;
+package com.example.surveydocument.generativeAI.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

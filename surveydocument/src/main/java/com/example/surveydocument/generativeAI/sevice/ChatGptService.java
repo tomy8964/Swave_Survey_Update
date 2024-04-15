@@ -1,8 +1,7 @@
-package com.example.surveydocument.chatGPT.sevice;
+package com.example.surveydocument.generativeAI.sevice;
 
 
-import com.example.surveydocument.chatGPT.config.ChatGptConfig;
-import com.example.surveydocument.chatGPT.request.*;
+import com.example.surveydocument.generativeAI.request.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -12,37 +11,40 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 
+import static com.example.surveydocument.generativeAI.config.ChatGptConfig.*;
+
 @Service
 @RequiredArgsConstructor
-public class ChatGptService {
+public class ChatGptService implements GenerativeAIService {
 
     private final WebClient webClient;
 
     private Mono<ChatGptResponseDto> getResponse(ChatGptRequestDto requestDto) {
         return webClient.post()
-                .uri(uriBuilder -> uriBuilder.path(ChatGptConfig.URL).build())
-                .header(ChatGptConfig.AUTHORIZATION, ChatGptConfig.BEARER + ChatGptConfig.API_KEY)
-                .contentType(MediaType.parseMediaType(ChatGptConfig.MEDIA_TYPE))
+                .uri(uriBuilder -> uriBuilder.path(URL).build())
+                .header(AUTHORIZATION, BEARER + API_KEY)
+                .contentType(MediaType.parseMediaType(MEDIA_TYPE))
                 .body(BodyInserters.fromValue(requestDto))
                 .retrieve()
                 .bodyToMono(ChatGptResponseDto.class);
     }
 
-    private Mono<ChatGptChoice> askQuestion(ChatGptQuestionRequestDto requestDto) {
+    private Mono<ChatGptChoice> askQuestion(QuestionRequestDto requestDto) {
         Message message = Message.builder()
-                .role(ChatGptConfig.ROLE_USER)
+                .role(ROLE_USER)
                 .content(requestDto.getQuestion())
                 .build();
         System.out.println(message);
         return this.getResponse(
                 new ChatGptRequestDto(
-                        ChatGptConfig.MODEL,
+                        MODEL,
                         Collections.singletonList(message)
                 )
         ).map(response -> response.getChoices().get(0));
     }
 
-    public Mono<ChatResultDto> chatGptResult(ChatGptQuestionRequestDto requestDto) {
+    @Override
+    public Mono<ChatResultDto> chatResult(QuestionRequestDto requestDto) {
         return askQuestion(requestDto).map(chatGptChoice ->
                 ChatResultDto.builder()
                         .index(chatGptChoice.getIndex())

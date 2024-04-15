@@ -1,6 +1,6 @@
-package com.example.surveydocument.chatGPT.sevice;
+package com.example.surveydocument.generativeAI.sevice;
 
-import com.example.surveydocument.chatGPT.request.*;
+import com.example.surveydocument.generativeAI.request.*;
 import com.example.surveydocument.restAPI.WebClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;

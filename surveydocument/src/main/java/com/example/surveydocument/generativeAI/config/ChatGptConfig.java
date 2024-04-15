@@ -1,5 +1,6 @@
-package com.example.surveydocument.chatGPT.config;
-public class ChatGptConfig {
+package com.example.surveydocument.generativeAI.config;
+
+public abstract class ChatGptConfig {
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String API_KEY = "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";
