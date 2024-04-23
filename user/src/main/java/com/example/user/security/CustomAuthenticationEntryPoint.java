@@ -1,5 +1,6 @@
-package com.example.user.util.oAuth;
+package com.example.user.security;
 
+import com.example.user.security.jwt.JwtErrorCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,25 +12,23 @@ import java.io.IOException;
 
 @Component
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        String exception = (String) request.getAttribute(JwtProperties.HEADER_STRING);
-        String errorCode;
+        Object exceptionObj = request.getAttribute("exception");
+        String errorMessage = "인증 에러가 발생했습니다."; // 기본 에러 메시지
 
-        if (exception.equals("토큰이 만료되었습니다.")) {
-            errorCode = "토큰이 만료되었습니다.";
-            setResponse(response, errorCode);
-        }
-
-        if (exception.equals("유효하지 않은 토큰입니다.")) {
-            errorCode = "유효하지 않은 토큰입니다.";
-            setResponse(response, errorCode);
+        if (exceptionObj instanceof JwtErrorCode jwtErrorCode) {
+            setResponse(response, jwtErrorCode.getCode() + " : " + jwtErrorCode.getMessage());
+        } else {
+            setResponse(response, errorMessage);
         }
     }
 
-    private void setResponse(HttpServletResponse response, String errorCode) throws IOException {
+    private void setResponse(HttpServletResponse response, String errorMessage) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().println(JwtProperties.HEADER_STRING + " : " + errorCode);
+        response.getWriter()
+                .println("{\"errorMessage\": \"" + errorMessage + "\"}");
     }
 }

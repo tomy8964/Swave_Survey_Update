@@ -1,8 +1,7 @@
-package com.example.user.util.oAuth;
+package com.example.user.security;
 
+import com.example.user.security.jwt.JwtRequestFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,44 +17,51 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@ConditionalOnDefaultWebSecurity
-@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfig {
 
     public static final String FRONT_URL = "http://localhost:3000";
     private final CorsFilter corsFilter;
+    private final JwtRequestFilter jwtRequestFilter;
 
-    // @Bean -> 해당 메소드의 리턴되는 오브젝트를 IoC로 등록해줌
     @Bean
     public BCryptPasswordEncoder encodePwd() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * SecurityFilterChain
+     * <p>
+     * WebSecurityConfigurerAdapter 가 deprecated 되면서 SecurityFilterChain 을 Bean 으로 등록하여 사용
+     * </p>
+     *
+     * @param http HttpSecurity
+     * @return SecurityFilterChain
+     * @throws Exception 예외
+     */
     @Bean
     @Order(SecurityProperties.BASIC_AUTH_ORDER)
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        http.csrf().disable()
+        // http 시큐리티 빌더
+        return http
+                .httpBasic() // JWT token을 사용하므로 basic 인증 disable
+                .disable()
+                .csrf() // csrf 비활성화
+                .disable()
                 .sessionManagement()  // session 을 사용하지 않음
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .httpBasic().disable()
-                .formLogin().disable()
-                .addFilter(corsFilter); // @CrossOrigin(인증X), 시큐리티 필터에 등록 인증(O)
-
-        http.headers().frameOptions().sameOrigin();
-
-        http.authorizeRequests()
-                .requestMatchers(FRONT_URL + "/main/**")
+                .authorizeHttpRequests()
+                .requestMatchers(FRONT_URL + "/main/**").permitAll()
+                .anyRequest()
                 .authenticated()
-                .anyRequest().permitAll()
                 .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(new CustomAuthenticationEntryPoint());
-
-
-        http.addFilterBefore(new JwtRequestFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build();
+                .exceptionHandling() // 예외 처리
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .and()
+                .formLogin() // form login disable
+                .disable()
+                .addFilter(corsFilter) // @CrossOrigin(인증X), 시큐리티 필터에 등록 인증(O)
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class) // JWT 필터 등록
+                .build();
     }
-
 }
