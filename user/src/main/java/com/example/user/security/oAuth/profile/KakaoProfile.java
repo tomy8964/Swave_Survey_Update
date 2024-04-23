@@ -1,4 +1,4 @@
-package com.example.user.util.oAuth.profile;
+package com.example.user.security.oAuth.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

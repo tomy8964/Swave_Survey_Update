@@ -1,4 +1,4 @@
-package com.example.user.util.oAuth.profile;
+package com.example.user.security.oAuth.profile;
 
 public interface Profile {
     String getEmail();

@@ -3,7 +3,6 @@ package com.example.user.user.controller;
 import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.user.response.UserDto;
 import com.example.user.user.service.UserService;
-import com.example.user.util.oAuth.JwtProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -12,6 +11,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import static com.example.user.security.jwt.JwtRequestFilter.HEADER_STRING;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class UserExternalController {
     public ResponseEntity<String> getLogin(@RequestParam("code") String code, @RequestParam("provider") String provider) {
         String jwtToken = userService.getLogin(code, provider);
         HttpHeaders headers = new HttpHeaders();
-        headers.add(JwtProperties.HEADER_STRING, jwtToken);
+        headers.add(HEADER_STRING, jwtToken);
         return ResponseEntity.ok().headers(headers).body("Login Success");
     }
 

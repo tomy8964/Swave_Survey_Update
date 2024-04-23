@@ -1,4 +1,4 @@
-package com.example.user.util.oAuth;
+package com.example.user.security.oAuth;
 
 import lombok.Builder;
 import lombok.Data;

@@ -1,7 +1,6 @@
 package com.example.user.user.domain;
 
-import com.example.user.user.response.UserDto;
-import com.example.user.util.oAuth.provider.Provider;
+import com.example.user.security.oAuth.provider.Provider;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -32,8 +31,7 @@ public class User {
     private String email;
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    private Provider provider;
+    private String provider;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
@@ -46,7 +44,7 @@ public class User {
 
     @Builder
     public User(Long id, String profileImgUrl, String nickname,
-                String email, Provider provider, UserRole userRole, String description) {
+                String email, String provider, UserRole userRole, String description) {
         this.id = id;
         this.profileImgUrl = profileImgUrl;
         this.nickname = nickname;

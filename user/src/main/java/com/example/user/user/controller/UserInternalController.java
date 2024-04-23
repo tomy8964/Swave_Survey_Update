@@ -1,6 +1,6 @@
 package com.example.user.user.controller;
 
-import com.example.user.user.service.UserService;
+import com.example.user.security.jwt.JwtService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", allowCredentials = "true")
 @Tag(name = "UserInternalController", description = "내부(모듈간) API Controller")
 public class UserInternalController {
-    private final UserService userService;
+
+    private final JwtService jwtService;
 
     @GetMapping("/me")
     @Cacheable(value = "user", key = "'user-' + #request", cacheManager = "cacheManager")
     public ResponseEntity<Long> getCurrentUser(HttpServletRequest request) {
-        return ResponseEntity.ok(userService.getUserId(request));
+        return ResponseEntity.ok(jwtService.getUserIdByJWT(request));
     }
 
 }
