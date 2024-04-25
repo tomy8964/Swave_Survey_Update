@@ -20,32 +20,14 @@ import reactor.core.publisher.Mono;
 @Profile({"local", "server"})
 @Configuration
 public class WebClientConfig {
+    @Value("${gateway.host}")
+    private static String gateway;
     private final ObjectMapper objectMapper;
-    private final String httpScheme = "https://";
 
     public WebClientConfig() {
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(new JavaTimeModule());
-    }
-
-    @Bean
-    public WebClient webClient() {
-        final int bufferSize = 16 * 1024 * 1024;  // 16MB
-        final ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
-                .codecs(configurer -> {
-                    configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON));
-                    configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper, MediaType.APPLICATION_JSON));
-                    configurer.defaultCodecs().maxInMemorySize(bufferSize);
-                })
-                .build();
-
-        return WebClient.builder()
-                .baseUrl(httpScheme)
-                .exchangeStrategies(exchangeStrategies)
-                .filter(logRequest())
-                .filter(errorHandlingFilter())
-                .build();
     }
 
     public static ExchangeFilterFunction logRequest() {
@@ -73,5 +55,24 @@ public class WebClientConfig {
                     String errorMessage = String.format("Error sending request to server. Error: %s", e.getMessage());
                     return Mono.error(new RuntimeException(errorMessage, e));
                 });
+    }
+
+    @Bean
+    public WebClient webClient() {
+        final int bufferSize = 16 * 1024 * 1024;  // 16MB
+        final ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
+                .codecs(configurer -> {
+                    configurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(objectMapper, MediaType.APPLICATION_JSON));
+                    configurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(objectMapper, MediaType.APPLICATION_JSON));
+                    configurer.defaultCodecs().maxInMemorySize(bufferSize);
+                })
+                .build();
+
+        return WebClient.builder()
+                .baseUrl(gateway)
+                .exchangeStrategies(exchangeStrategies)
+                .filter(logRequest())
+                .filter(errorHandlingFilter())
+                .build();
     }
 }

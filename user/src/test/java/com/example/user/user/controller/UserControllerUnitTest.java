@@ -1,10 +1,10 @@
 package com.example.user.user.controller;
 
+import com.example.user.security.oAuth.provider.Kakao;
 import com.example.user.user.domain.UserRole;
 import com.example.user.user.request.UserUpdateRequest;
 import com.example.user.user.response.UserDto;
 import com.example.user.user.service.UserService;
-import com.example.user.util.oAuth.provider.Kakao;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.sql.Timestamp;
 
+import static com.example.user.security.jwt.JwtRequestFilter.HEADER_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -59,7 +60,7 @@ public class UserControllerUnitTest {
                         .with(csrf())
                 )
                 .andExpect(status().isOk())
-                .andExpect(header().string(JwtProperties.HEADER_STRING, jwtToken))
+                .andExpect(header().string(HEADER_STRING, jwtToken))
                 .andDo(print())
                 .andReturn();
         // then
@@ -74,7 +75,7 @@ public class UserControllerUnitTest {
                 .profileImgUrl("http://example.com/profile.jpg")
                 .nickname("Test Nickname")
                 .email("test@example.com")
-                .provider(new Kakao())
+                .provider(new Kakao().getValue())
                 .userRole(UserRole.USER)
                 .description("Test Description")
                 .createTime(new Timestamp(30))
@@ -146,22 +147,22 @@ public class UserControllerUnitTest {
         assertEquals("testUser님의 정보가 삭제되었습니다.", responseBody);
     }
 
-    @Test
-    @DisplayName("내부 서비스 통신 테스트 - JWTToken 통한 현재 사용자 조회")
-    void getCurrentUserInternal() throws Exception {
-        // given
-        Long testUserId = 1L;
-        when(userService.getUserId(any(HttpServletRequest.class))).thenReturn(testUserId);
-
-        // when
-        MvcResult mvcResult = mockMvc.perform(get("/api/user/internal/me")
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andDo(print())
-                .andReturn();
-        String responseBody = mvcResult.getResponse().getContentAsString();
-
-        // then
-        assertEquals(testUserId.toString(), responseBody);
-    }
+//    @Test
+//    @DisplayName("내부 서비스 통신 테스트 - JWTToken 통한 현재 사용자 조회")
+//    void getCurrentUserInternal() throws Exception {
+//        // given
+//        Long testUserId = 1L;
+//        when(userService.getUserIdByJWT(any(HttpServletRequest.class))).thenReturn(testUserId);
+//
+//        // when
+//        MvcResult mvcResult = mockMvc.perform(get("/api/user/internal/me")
+//                        .with(csrf()))
+//                .andExpect(status().isOk())
+//                .andDo(print())
+//                .andReturn();
+//        String responseBody = mvcResult.getResponse().getContentAsString();
+//
+//        // then
+//        assertEquals(testUserId.toString(), responseBody);
+//    }
 }

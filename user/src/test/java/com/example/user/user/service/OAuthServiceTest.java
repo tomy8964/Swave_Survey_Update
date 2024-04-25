@@ -3,7 +3,7 @@
 //import com.example.user.user.domain.User;
 //import com.example.user.user.domain.UserRole;
 //import com.example.user.user.repository.UserRepository;
-//import com.example.user.util.oAuth.OauthToken;
+//import com.example.user.security.oAuth.OauthToken;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;

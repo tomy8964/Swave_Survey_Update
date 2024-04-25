@@ -3,7 +3,7 @@
 //import com.example.user.user.domain.User;
 //import com.example.user.user.repository.UserRepository;
 //import com.example.user.user.request.UserUpdateRequest;
-//import com.example.user.user.service.OAuthService;
+//import com.example.user.service.oAuth.OAuthService;
 //import com.example.user.util.oAuth.JwtProperties;
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import jakarta.persistence.EntityManager;

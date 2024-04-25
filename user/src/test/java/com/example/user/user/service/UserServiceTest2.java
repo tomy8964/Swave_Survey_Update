@@ -1,6 +1,6 @@
 //package com.example.user.user.service;
 //
-//import com.example.user.util.oAuth.OauthToken;
+//import com.example.user.security.oAuth.OauthToken;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;
