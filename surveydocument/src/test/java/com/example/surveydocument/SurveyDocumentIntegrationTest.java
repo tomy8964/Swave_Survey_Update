@@ -34,8 +34,6 @@ import java.util.List;
 import static com.example.surveydocument.survey.controller.SurveyDocumentExternalControllerTest.createSurveyRequestDto;
 import static com.example.surveydocument.survey.service.SurveyDocumentServiceTest.createExpectedPage;
 import static com.example.surveydocument.survey.service.SurveyDocumentServiceTest.createPageRequestDto;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;

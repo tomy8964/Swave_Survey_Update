@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.json.JsonParseException;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -39,23 +40,10 @@ public class SurveyAnalyzeService {
     private final SurveyAnalyzeRepository surveyAnalyzeRepository;
     private final RestAPIService restAPIService;
 
-    private static List<Object> getListResult(String line) throws JsonProcessingException {
-        String inputString = line.replaceAll("'", "");
-
-        log.info("result python");
-        log.info(inputString);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        List<Object> resultList = objectMapper.readValue(inputString, List.class);
-        log.info(String.valueOf(resultList));
-        return resultList;
-    }
-
     // 파이썬에 DocumentId 보내주고 분석결과 Entity에 매핑해서 저장
-    public void analyze(String stringId) throws InvalidPythonException {
-        long surveyDocumentId = Long.parseLong(stringId);
-
+    public void analyze(String stringId) {
         try {
+            long surveyDocumentId = Long.parseLong(stringId);
             String line = getAnalyzeResult(surveyDocumentId);
             List<Object> resultList = getListResult(line);
             ArrayList<Object> apriori = (ArrayList<Object>) resultList.get(APRIORI_NUMBER);
@@ -64,10 +52,64 @@ public class SurveyAnalyzeService {
 
             saveSurveyAnalyze(surveyDocumentId, apriori, compare, chi);
         } catch (IOException e) {
-            // 체크 예외 -> 런타임 커스텀 예외 변환 처리
-            // python 파일 오류
             throw new InvalidPythonException(e);
         }
+    }
+
+    private String getAnalyzeResult(long surveyDocumentId) throws IOException {
+        String pythonLocation;
+        try {
+            Resource[] resources = ResourcePatternUtils
+                    .getResourcePatternResolver(new DefaultResourceLoader())
+                    .getResources("classpath*:python/python4.py");
+            pythonLocation = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() - 1);
+            if (pythonLocation.isEmpty()) {
+                throw new InvalidPythonException("올바르지 않은 파이썬 파일 경로입니다.");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        ProcessBuilder builder = new ProcessBuilder("python", pythonLocation, String.valueOf(surveyDocumentId));
+
+        builder.redirectErrorStream(true);
+        Process process = builder.start();
+
+        // 자식 프로세스가 종료될 때까지 기다림
+        int exitCode;
+        try {
+            exitCode = process.waitFor();
+        } catch (InterruptedException e) {
+            exitCode = -1;
+        }
+
+        if (exitCode != 0) {
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String errorLine;
+            log.error("Error output:");
+            while ((errorLine = errorReader.readLine()) != null) {
+                log.error(errorLine);
+            }
+        }
+
+        log.error("Process exited with code " + exitCode);
+
+        // 서브 프로세스가 출력하는 내용을 받기 위해
+        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+        return br.readLine();
+    }
+
+    private List<Object> getListResult(String line) {
+        String inputString = line.replaceAll("'", "");
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Object> resultList = null;
+        try {
+            resultList = objectMapper.readValue(inputString, List.class);
+        } catch (JsonProcessingException e) {
+            throw new JsonParseException(e);
+        }
+        return resultList;
     }
 
     // 분석 상세 분석 Get
@@ -308,49 +350,6 @@ public class SurveyAnalyzeService {
             surveyAnalyzeRepository.save(surveyAnalyze);
             return surveyAnalyze;
         }
-    }
-
-    private String getAnalyzeResult(long surveyDocumentId) throws IOException {
-        System.out.println("pythonbuilder 시작");
-        ProcessBuilder builder;
-
-        Resource[] resources = ResourcePatternUtils
-                .getResourcePatternResolver(new DefaultResourceLoader())
-                .getResources("classpath*:python/python4.py");
-
-        log.info(String.valueOf(resources[0]));
-
-        String substring = String.valueOf(resources[0]).substring(6, String.valueOf(resources[0]).length() - 1);
-        log.info(substring);
-
-        builder = new ProcessBuilder("python", substring, String.valueOf(surveyDocumentId));
-
-        builder.redirectErrorStream(true);
-        Process process = builder.start();
-
-        // 자식 프로세스가 종료될 때까지 기다림
-        int exitCode;
-        try {
-            exitCode = process.waitFor();
-        } catch (InterruptedException e) {
-            exitCode = -1;
-        }
-
-        if (exitCode != 0) {
-            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String errorLine;
-            log.error("Error output:");
-            while ((errorLine = errorReader.readLine()) != null) {
-                log.error(errorLine);
-            }
-        }
-
-        log.error("Process exited with code " + exitCode);
-
-        // 서브 프로세스가 출력하는 내용을 받기 위해
-        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-        return br.readLine();
     }
 
     private SurveyAnalyzeDto getSurveyDetailAnalyzeDto(SurveyAnalyze surveyAnalyze) {
