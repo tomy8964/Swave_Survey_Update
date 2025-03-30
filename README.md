@@ -1,9 +1,6 @@
 # SWAVE Project - WaveForm 개선 프로젝트
-[SWAVE Project - WaveForm](https://github.com/KEA-SWAVE-SURVEY/spring-gateway)의 낮은 코드 퀄리티, 왜 사용하는지 모르고 사용한 기술 스택, 배포 환경 변경, 막무가내로 작성한 테스트 코드, 난잡한 에러 처리, 부족한 성능 등을 고치면서 공부하기 위해 시작한 프로젝트입니다.
 
 > 현재 `SurveyDocument` , `User` 모듈 수정 중입니다.
-
-## [Notion - 개선 작업기](https://tomy8964.notion.site/WaveForm-432627460d6d4328819a304958559f32)
 
 
 <div align="center">
