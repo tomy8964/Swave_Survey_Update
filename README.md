@@ -34,13 +34,13 @@ Prometheus와 Grafana를 통해 Gateway Pod와 클러스터 노드의 CPU·메�
     
     그 결과, 원래는 설문 조회 1회, 질문 조회 1회, 선택지 조회 2회(2개의 선택지가 있는 예시), 그 외 일대다 관계 조회 2회로 총 6회 실행되던 쿼리가 설문+일대일+질문 조회 1회, 선택지 조회 1회, 그 외 일대다 관계 조회 1회로 총 **6회 → 3회**로 줄어들었습니다.
     
-    - https://velog.io/@tomy8964/Spring-QueryDsl-DB-%EC%BF%BC%EB%A6%AC-%EC%8B%9C-%EB%B0%9C%EC%83%9D%ED%95%98%EB%8A%94-N1-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0-%EB%B0%8F-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0
+    - [[Spring + QueryDsl] DB 쿼리 시 발생하는 N+1 문제 해결 및 성능 개선](https://velog.io/@tomy8964/Spring-QueryDsl-DB-%EC%BF%BC%EB%A6%AC-%EC%8B%9C-%EB%B0%9C%EC%83%9D%ED%95%98%EB%8A%94-N1-%EB%AC%B8%EC%A0%9C-%ED%95%B4%EA%B2%B0-%EB%B0%8F-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0)
     
     다음으로 서비스의 요구사항인 is_deleted 플래그를 통해 삭제 데이터를 관리하고 있었습니다. 이에 따라 질문 테이블에서 survey_document_id와 is_deleted에 각각 단일 인덱스를 설정해두었으나, 실제 MySQL 옵티마이저는 survey_document_id 인덱스만 사용하고 is_deleted는 후처리로만 적용해 수백 건을 스캔하는 비효율이 드러났습니다. 
     
     이를 해결하기 위해 두 컬럼을 한 번에 처리하는 복합 인덱스 (survey_document_id, is_deleted)를 설계·적용했고, 실행 계획 재검증 결과 스캔 대상이 300건에서 52건으로 줄어들며 평균 응답 속도가 약 0.15ms에서 0.05ms로 3배 이상 개선되었습니다. 또한 나머지 테이블에 대해서도 복합 인덱스를 적용하였습니다.
     
-    - https://velog.io/@tomy8964/%EB%B3%B5%ED%95%A9-%EC%9D%B8%EB%8D%B1%EC%8A%A4-%EC%84%A4%EA%B3%84%EB%A1%9C-%EC%A7%88%EB%AC%B8-%EC%A1%B0%ED%9A%8C-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0%ED%95%98%EA%B8%B0
+    - [복합 인덱스 설계로 설문 조회 성능 개선하기](https://velog.io/@tomy8964/%EB%B3%B5%ED%95%A9-%EC%9D%B8%EB%8D%B1%EC%8A%A4-%EC%84%A4%EA%B3%84%EB%A1%9C-%EC%A7%88%EB%AC%B8-%EC%A1%B0%ED%9A%8C-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0%ED%95%98%EA%B8%B0)
     
     이 개선만으로 서비스 전체 TPS는 64.4에서 약 200까지 상승했습니다.
     
@@ -48,7 +48,7 @@ Prometheus와 Grafana를 통해 Gateway Pod와 클러스터 노드의 CPU·메�
     
     자주 조회되는 설문 데이터를 Redis에 캐싱해 DB 조회 횟수를 대폭 줄였습니다. 캐싱 적용 후 TPS는 200에서 500까지 추가로 높아졌습니다.
     
-    - https://velog.io/@tomy8964/Spring-Redis-Kubenetes-ArgoCD-Redis-cache%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EC%A1%B0%ED%9A%8C-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0
+    - [[Spring + Redis] Redis cache를 이용한 조회 성능 개선](https://velog.io/@tomy8964/Spring-Redis-Kubenetes-ArgoCD-Redis-cache%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%9C-%EC%A1%B0%ED%9A%8C-%EC%84%B1%EB%8A%A5-%EA%B0%9C%EC%84%A0)
 3. **Gateway 확장 및 오토스케일링**
     
     Kubernetes에서 Gateway replica를 1→3으로 확장하고, CPU 사용률 70% 초과 시 자동으로 Pod를 증설하는 Horizontal Pod Autoscaler(HPA)를 도입했습니다. 
@@ -74,8 +74,7 @@ Prometheus와 Grafana를 통해 Gateway Pod와 클러스터 노드의 CPU·메�
 
 @WebMvcTest, @DataJpaTest, @SpringBootTest 등을 상황에 맞게 조합하면서 “이 테스트가 진짜 검증해야 할 행동이 무엇인가”를 매번 고민했고, Mockito의 when/thenReturn vs. 실제 레포지토리 사용 여부를 철저히 기준화해 테스트의 신뢰성과 유지보수성을 모두 확보했습니다.
 
-- https://velog.io/@tomy8964/Spring-MVC-%ED%8C%A8%ED%84%B4%EC%9D%98-%EB%B0%B1%EC%97%94%EB%93%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EB%B0%A9%EB%B2%95
-
+- [[Spring] 테스트 커버리지 100%를 목표로 MSA 아키텍처의 백엔드 프로젝트 테스트 방법](https://velog.io/@tomy8964/Spring-MVC-%ED%8C%A8%ED%84%B4%EC%9D%98-%EB%B0%B1%EC%97%94%EB%93%9C-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EB%B0%A9%EB%B2%95)
 ### 설문 응답 동시성 문제 해결
 
 동일 설문에 대한 중복 응답 요청이 대량으로 들어올 때 DB 트랜잭션만으로는 성능 저하와 잠재적 데드락 위험을 완전히 해소할 수 없다는 것을 확인했습니다. 
@@ -86,7 +85,7 @@ Prometheus와 Grafana를 통해 Gateway Pod와 클러스터 노드의 CPU·메�
 
 Redis 클라이언트를 선택할 때도 단순 RedisTemplate 대신 **RedissonClient**를 도입한 이유는, **tryLock(waitTime, leaseTime)** API가 제공하는 명시적 대기·만료 타이밍 제어와 **auto-renewal** 기능 덕분에 “서비스가 예기치 않게 중단되더라도 락이 자동 해제된다”는 보장이 있었기 때문입니다. 또한 Spring AOP로 락 로직을 `@DistributedLock(key = "survey:#{#dto.id}")` 한 줄로 추상화하면서, 비즈니스 코드는 락 획득·해제 스레드 안전성에 대해 전혀 신경 쓰지 않아도 되도록 분리했습니다.
 
-- https://velog.io/@tomy8964/MSA-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98%EC%97%90%EC%84%9C-Redis%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B6%84%EC%82%B0%EB%9D%BD-%EC%A0%81%EC%9A%A9%EC%9D%84-Spring-AOP%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%B4-%EC%9E%AC%EC%82%AC%EC%9A%A9%EC%84%B1-%EB%86%92%EA%B2%8C-%EC%A0%81%EC%9A%A9%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95
+- [[Spring] MSA 아키텍처에서 Redis를 활용한 분산락 적용을 Spring AOP를 활용해 재사용성 높게 적용하는 방법](https://velog.io/@tomy8964/MSA-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98%EC%97%90%EC%84%9C-Redis%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B6%84%EC%82%B0%EB%9D%BD-%EC%A0%81%EC%9A%A9%EC%9D%84-Spring-AOP%EB%A5%BC-%EC%82%AC%EC%9A%A9%ED%95%B4-%EC%9E%AC%EC%82%AC%EC%9A%A9%EC%84%B1-%EB%86%92%EA%B2%8C-%EC%A0%81%EC%9A%A9%ED%95%98%EB%8A%94-%EB%B0%A9%EB%B2%95)
 
 ### 왜 Filter에서 JWT 인증을 처리했는가?
 
@@ -100,8 +99,7 @@ AOP 어노테이션은 비즈니스 코드와 분리된 관심사 분리에 유�
 
 이처럼 “어떤 요청을, 언제, 어떻게 검증해야 하는지”부터 “실패 시 예외를 어떻게 일관되게 처리할지”까지 치밀하게 고민한 끝에, 필터 기반 JWT 인증이 최적의 선택임을 확신할 수 있었습니다.
 
-- https://velog.io/@tomy8964/Spring-%EC%99%9C-Filter%EC%97%90%EC%84%9C-JWT-%EC%9D%B8%EC%A6%9D%EC%9D%84-%EC%B2%98%EB%A6%AC%ED%95%98%EB%8A%94%EA%B0%80
-
+- [[Spring] 왜 Filter에서 JWT 인증을 처리하는가?](https://velog.io/@tomy8964/Spring-%EC%99%9C-Filter%EC%97%90%EC%84%9C-JWT-%EC%9D%B8%EC%A6%9D%EC%9D%84-%EC%B2%98%EB%A6%AC%ED%95%98%EB%8A%94%EA%B0%80)
 ### 다형성 기반 OAuthService 리팩토링으로 확장성·유지보수성 확보
 
 OAuth 통합 로직을 리팩토링하면서 가장 먼저 고민한 것은 “새로운 OAuth 공급자가 추가될 때마다 if/switch나 Enum 값을 수정해야 하는 비효율”이었습니다. 
@@ -118,7 +116,7 @@ OAuth 통합 로직을 리팩토링하면서 가장 먼저 고민한 것은 “�
 
 이 과정을 통해 “단순히 기능이 동작하게 하는 수준을 넘어, 확장성과 유지보수성을 미리 예측해 아키텍처를 설계하는 능력”을 길렀으며, 지금 다시 만든다면 Spring의 DI 컨테이너를 활용해 Provider 구현체들을 자동 탐색하고, 레지스트리 클래스를 완전히 제거해 더욱 가볍고 선언적인 구조로 진화시킬 것 같습니다.
 
-- https://velog.io/@tomy8964/Spring-OAuthService-%EB%8B%A4%ED%98%95%EC%84%B1%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-%EA%B0%9D%EC%B2%B4-%EC%A7%80%ED%96%A5%EC%A0%81%EC%9C%BC%EB%A1%9C-%EB%A6%AC%ED%8C%A9%ED%86%A0%EB%A7%81-%ED%95%98%EA%B8%B0
+- [[Spring] OAuth Kakao, Git, Google 로그인 다형성을 활용하여 객체 지향적으로 리팩토링 하기](https://velog.io/@tomy8964/Spring-OAuthService-%EB%8B%A4%ED%98%95%EC%84%B1%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-%EA%B0%9D%EC%B2%B4-%EC%A7%80%ED%96%A5%EC%A0%81%EC%9C%BC%EB%A1%9C-%EB%A6%AC%ED%8C%A9%ED%86%A0%EB%A7%81-%ED%95%98%EA%B8%B0)
 
 ### **성과 및 결과**
 
